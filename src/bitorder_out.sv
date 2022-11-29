@@ -39,11 +39,11 @@ module bitorder_out (
                     counter_in <= (counter_in == 2'b11)? 0: counter_in + 1'b1;
 
                     case(counter_in)
-                        0: bufferA[1:0] <= axiid;
-                        2'b01: bufferA[3:2] <= axiid;
-                        2'b10: bufferA[5:4] <= axiid;
+                        0: bufferA[7:6] <= axiid;
+                        2'b01: bufferA[5:4] <= axiid;
+                        2'b10: bufferA[3:2] <= axiid;
                         2'b11: begin
-                                bufferA[7:6] <= axiid;
+                                bufferA[1:0] <= axiid;
                                 hotswap <= 1'b1;
                                 completeA <= 1'b1;
                         end
@@ -58,22 +58,22 @@ module bitorder_out (
                 end else begin
                     case(counter_out)
                         0: begin
-                            axiod <= bufferB[7:6];
+                            axiod <= bufferB[1:0];
                             axiov <= 1'b1;
                             counter_out <= 3'b001;
                         end 
                         3'b001: begin
-                            axiod <= bufferB[5:4];
+                            axiod <= bufferB[3:2];
                             axiov <= 1;
                             counter_out <= 3'b010;
                         end 
                         3'b010: begin
-                            axiod <= bufferB[3:2];
+                            axiod <= bufferB[5:4];
                             axiov <= 1'b1;
                             counter_out <= 3'b011;
                         end 
                         3'b011: begin
-                            axiod <= bufferB[1:0];
+                            axiod <= bufferB[7:6];
                             axiov <= 1'b1;
                             counter_out <= ((counter_in == 2'b11) & axiiv)? 0: 3'b100;
                         end
@@ -91,11 +91,11 @@ module bitorder_out (
                     counter_in <= (counter_in == 2'b11)? 0: counter_in + 1'b1;
 
                     case(counter_in)
-                        0: bufferB[1:0] <= axiid;
-                        2'b01: bufferB[3:2] <= axiid;
-                        2'b10: bufferB[5:4] <= axiid;
+                        0: bufferB[7:6] <= axiid;
+                        2'b01: bufferB[5:4] <= axiid;
+                        2'b10: bufferB[3:2] <= axiid;
                         2'b11: begin
-                                bufferB[7:6] <= axiid;
+                                bufferB[1:0] <= axiid;
                                 hotswap <= 0;
                         end
                     endcase
@@ -106,22 +106,22 @@ module bitorder_out (
                 //OUTPUT
                 case(counter_out)
                     0: begin
-                        axiod <= bufferA[7:6];
+                        axiod <= bufferA[1:0];
                         axiov <= 1'b1;
                         counter_out <= 3'b001;
                     end 
                     3'b001: begin
-                        axiod <= bufferA[5:4];
+                        axiod <= bufferA[3:2];
                         axiov <= 1'b1;
                         counter_out <= 3'b010;
                     end 
                     3'b010: begin
-                        axiod <= bufferA[3:2];
+                        axiod <= bufferA[5:4];
                         axiov <= 1'b1;
                         counter_out <= 3'b011;
                     end 
                     3'b011: begin
-                        axiod <= bufferA[1:0];
+                        axiod <= bufferA[7:6];
                         axiov <= 1'b1;
                         counter_out <= ((counter_in == 2'b11) & axiiv)? 0: 3'b100;
                     end

@@ -7,6 +7,7 @@ module ether_out (
                     input wire axiiv,
                     input wire [1:0] axiid,
                     input wire preamble_signal,
+                    input wire data_complete, //is on for a single cycle the cycle after all data has been transmitted
 
                     output logic axiov,
                     output logic [1:0] axiod,
@@ -15,11 +16,17 @@ module ether_out (
     logic [175:0] HEADER;
     logic [4:0] gap_counter; // gap is 32 cycles
     logic [6:0] header_counter; //header is 88 cycles
+    logic [9:0] data_counter; //needs at least 184 cycles of continuous valid data
     logic [3:0] fcs_counter; //fcs is 16 cycles
     logic transmit_header;
     logic transmit_data;
     logic transmit_fcs;
+    logic transmit_gap;
     logic downtime;
+
+    logic buffer_data;
+    logic [9:0] buffer_counter;
+    logic [500:0] buffer; // at most, preamble singal = data signal (need to wait 88 clock cycles when interal clock = ethernet clock)
 
     logic [1:0] fcs_in;
     logic fcs_in_valid;
@@ -28,18 +35,14 @@ module ether_out (
     logic crc_rst;
 
     logic [31:0] fcs_hold;
-    logic [1:0] current_header_out;
 
-    //SA = FF:FF:FF:FF:FF:FF
-    //DA = FF:FF:FF:FF:FF:FF
-    //Ethertype = 0x0600 = 0b 0000_0110 _0000_0000 = 1001_0000, 0000_0000
     assign HEADER = 176'h5555_5555_5555_5557_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_9000;
 
     //no time crossing right now
     crc32 my_crc (.clk(clk), .rst(crc_rst), .axiiv(fcs_in_valid), .axiid(fcs_in), .axiov(fcs_out_valid), .axiod(fcs_out));
 
     always_comb begin
-        if (downtime | transmit_fcs) begin
+        if (downtime | transmit_fcs | transmit_gap) begin
             crc_rst = 1'b1;
             fcs_in_valid = 0;
             fcs_in = 0;
@@ -50,16 +53,21 @@ module ether_out (
             fcs_in = axiod;
         end
     end
-
+   
+    //state machine and handling outputs
     always_ff @(posedge clk) begin
         if(rst) begin
             gap_counter <= 0;
             header_counter <= 0;
+            data_counter <= 0;
             fcs_counter <= 0;
+            buffer_counter <= 0;
 
+            buffer_data <= 0;
             transmit_header <= 0;
             transmit_data <= 0;
-            transmit_fcs <- 0;
+            transmit_fcs <= 0;
+            transmit_gap <= 0;
             downtime <= 1'b1;
         end
         else begin
@@ -68,14 +76,47 @@ module ether_out (
                     transmit_header <= 1'b1;
                     downtime <= 0;
                 end
-                
+
             end
+
             else if (transmit_header) begin
+                if (header_counter == 7'd31) begin
+                    transmit_header <= 0;
+                    transmit_data <= 1'b1;
+                    header_counter <= 0;
+                end
+                else begin
+                    header_counter <= header_counter + 1'b1;
+                    //transmit appropriate portion of header based on counter
+                end
             end
+
             else if (transmit_data) begin
+                if (data_counter < 9'd183) begin
+                    if(~axiiv | buffer_data) begin
+                        axiod <= 0;
+                        axiov <= 1'b1;
+                        buffer_data <= 1'b1;
+                    end
+                end else begin
+                    if (buffer_data) begin
+
+                    end
+                end
+
             end
+
             else if (transmit_fcs) begin
             end
+            else if (transmit_gap) begin
+            end
+        end
+    end
+
+    //storing inputs
+    always_ff @(posedge clk) begin
+        if (axiiv) begin
+            buffer
         end
     end
 
