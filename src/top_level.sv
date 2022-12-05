@@ -38,9 +38,9 @@ module top_level(
     assign eth_rstn = ~btnc;
     assign led[13:0] = counter;
     assign led[15] = kill_out;
-    assign led[14] = done_out;
+    assign led[14] = done_out
 
-    //divider my_divider (.clk(clk_100mhz), .ethclk(eth_refclk));
+    //divide
     //ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth));
     //bitorder my_bitorder (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .axiov(axiov_bit), .axiod(axiod_bit));
     //firewall my_firewall (.clk(eth_refclk),.rst(btnc),.axiiv(axiov_bit),.axiid(axiod_bit),.axiov(axiov_fire),.axiod(axiod_fire));
