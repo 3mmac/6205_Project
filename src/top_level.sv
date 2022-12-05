@@ -40,17 +40,25 @@ module top_level(
     assign led[15] = kill_out;
     assign led[14] = done_out;
 
-    divider my_divider (.clk(clk_100mhz), .ethclk(eth_refclk));
-    ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth));
-    bitorder my_bitorder (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .axiov(axiov_bit), .axiod(axiod_bit));
-    firewall my_firewall (.clk(eth_refclk),.rst(btnc),.axiiv(axiov_bit),.axiid(axiod_bit),.axiov(axiov_fire),.axiod(axiod_fire));
-    cksum my_cksum (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .done(done_out), .kill(kill_out));
-    aggregate my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
-    seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
+    //divider my_divider (.clk(clk_100mhz), .ethclk(eth_refclk));
+    //ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth));
+    //bitorder my_bitorder (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .axiov(axiov_bit), .axiod(axiod_bit));
+    //firewall my_firewall (.clk(eth_refclk),.rst(btnc),.axiiv(axiov_bit),.axiid(axiod_bit),.axiov(axiov_fire),.axiod(axiod_fire));
+    //cksum my_cksum (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .done(done_out), .kill(kill_out));
     
-    //algo module
+    //aggregate my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
+    //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
+    
+    //divide
+    //divider my_divider(.clk)
+    //matrix_loader
+    
+    //algo_holder
+    
+    //matrix_compiler
+    //bitorder_out
     //ether_out
-        //bit order
+
 
     always_ff @(posedge eth_refclk) begin
         if(btnc) begin
