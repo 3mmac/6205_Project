@@ -2,18 +2,26 @@
 `timescale 1ns / 1ps
 
 
-module aggregate (
+module aggregate #( parameter MAX_ELEMENT_SIZE = 8,
+                    parameter MAX_ROW_SIZE_A = 32,
+                    parameter MAX_COL_SIZE_A = 32)
+                (
                 input wire clk,
                 input wire rst,
                 input wire axiiv,
                 input wire [1:0] axiid,
 
                 output logic axiov,
-                output logic [31:0] axiod 
+                output logic [MAX_ELEMENT_SIZE+$clog2(MAX_ROW_SIZE_A)+$clog2(MAX_COL_SIZE_A)-1:0] axiod 
                 );
     
+    //Input: Ethernet DIbits that arfe in MSBit/MSByte
+    //Output: {Element's Type, Element's Row, Element's Col, Element's Value}
+    //         [0]             [MAX_ROW_SIZE_A-1:0] [] []
 
-    logic [31:0] data_buffer;
+    logic [$clog2(MAX_ROW_SIZE_A)-1:0] row_buffer;
+    logic [$clog2(MAX_COL_SIZE_A)-1:0] col_buffer;
+    
     logic [5:0] bit_counter;
     logic prev_axiiv;
     logic packet;

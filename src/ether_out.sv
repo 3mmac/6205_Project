@@ -10,8 +10,7 @@ module ether_out (
                     input wire data_complete, //is on for a single cycle the cycle after all data has been transmitted
 
                     output logic axiov,
-                    output logic [1:0] axiod,
-
+                    output logic [1:0] axiod
 );
     logic [175:0] HEADER;
     logic [4:0] gap_counter; // gap is 32 cycles
@@ -116,7 +115,6 @@ module ether_out (
     //storing inputs
     always_ff @(posedge clk) begin
         if (axiiv) begin
-            buffer
         end
     end
 
