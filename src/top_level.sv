@@ -13,7 +13,9 @@ module top_level(
     output logic ca, cb, cc, cd, ce, cf, cg,
     output logic [7:0] an
     );
-
+    
+    logic inter_refclk;
+    
     logic [1:0] axiod_eth;
     logic axiov_eth;
     logic prev_axiov_eth;
@@ -40,7 +42,7 @@ module top_level(
     assign led[15] = kill_out;
     assign led[14] = done_out
 
-    //divide
+    clk_wiz_0_clk_wiz my_divider(.clk_100mhz(clk100mhz), .eth_refclk(eth_refclk), .inter_refclk(inter_refclk)) 
     //ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth));
     //bitorder my_bitorder (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .axiov(axiov_bit), .axiod(axiod_bit));
     //firewall my_firewall (.clk(eth_refclk),.rst(btnc),.axiiv(axiov_bit),.axiid(axiod_bit),.axiov(axiov_fire),.axiod(axiod_fire));
@@ -60,20 +62,20 @@ module top_level(
     //ether_out
 
 
-    always_ff @(posedge eth_refclk) begin
-        if(btnc) begin
-            counter <= 0;
-            val_in <= 0;
-        end
-        if ((prev_axiov_eth == 1'b1) & (axiov_eth == 0)) begin
-            counter <= counter + 1'b1;
-        end
-        prev_axiov_eth <= axiov_eth;
+//    always_ff @(posedge eth_refclk) begin
+//        if(btnc) begin
+//            counter <= 0;
+//            val_in <= 0;
+//        end
+//        if ((prev_axiov_eth == 1'b1) & (axiov_eth == 0)) begin
+//            counter <= counter + 1'b1;
+//        end
+//        prev_axiov_eth <= axiov_eth;
 
-        if(axiov_agg) val_in <= axiod_agg;
+//        if(axiov_agg) val_in <= axiod_agg;
 
-        //val_in <= (axiov_agg)? axiod_agg: ((val_in)? val_in: 0);
-    end
+//        //val_in <= (axiov_agg)? axiod_agg: ((val_in)? val_in: 0);
+//    end
 
 endmodule
 

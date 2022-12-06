@@ -10,14 +10,10 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                      (  input wire inter_refclk,
                         input wire eth_refclk,
                         input wire valid_data_in,
-                        input wire matrix_element,
-                        input wire requested_a_row,
-                        input wire requested_b_col,
+                        input wire [clog2(MAX_ELEMENT_SIZE)-1:0] matrix_element,
 
-                        output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE:0] a_row_out,
-                        output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE:0] b_col_out,
-                        output logic complete
-
+                        output logic [1:0] dibit,
+                        output logic valid_data_out
     );
 
 
