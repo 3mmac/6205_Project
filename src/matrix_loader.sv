@@ -4,75 +4,103 @@
 //Potential Alteration, send out addr when added and then the module can request when its addr is seen
 //NEED TO ADD CHECK SYSTEM
 
-module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8,
-                        parameter MAX_ROW_SIZE_A = 32,
-                        parameter MAX_COL_SIZE_A = 32,
-                        parameter MAX_ROW_SIZE_B = 32,
-                        parameter MAX_COL_SIZE_B = 32)
+module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
+                        parameter MAX_SIZE_A = 32,
+                        parameter MAX_SIZE_B = 32)
 
                     (   input wire inter_refclk,
                         input wire eth_refclk,
                         input wire rst,
+
                         input wire axiiv,
                         input wire axiid,
+
                         input wire requested_a_row,
                         input wire requested_b_col,
 
+                        
+                        output logic addr_out;
                         output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
                         output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out,
                         output logic complete
                     );
 
-    parameter HEADER_SIZE = MAX_ELEMENT_SIZE + $clog2(MAX_ROW_SIZE_A) + $clog2(MAX_COL_SIZE_B);
-    parameter ADDR_LENGTH = MAX_ELEMENT_SIZE*$clog2(MAX_ROW_SIZE_A)*$clog2(MAX_COL_SIZE_B);
-
+    // BRAM address = 0 through 31
+    // BRAM value = an 256 bit number
+    
+    logic bram_rst;
+    logic bad;
 
     logic downtime;
-    logic info;
     logic loading;
-    logic retrieving;
-    
-    logic [HEADER_SIZE-1:0] info_counter; //
-    logic [MAX_ELEMENT_SIZE-1:0] element_value;
-    logic 
-    
-    logic [$clog2(MAX_ROW_SIZE_A)] matrix_a_size; // will be loaded in
-    logic [$clog2(MAX_COL_SIZE_B)] matrix_b_size; // will be loaded in
+    logic transmitting;
 
-    logic [ADDR_LENGTH-1:0] A_addra; //matrix A loading address
-    logic [ADDR_LENGTH-1:0] A_addrb; //matrix A recieving address
-    logic [ADDR_LENGTH-1:0] B_addra; //matrix B loading address
-    logic [ADDR_LENGTH-1:0] B_addrb; //matrix B recieving address
-    logic [MAX_ELEMENT_SIZE*$clog2(MAX_ROW_SIZE_A)-1:0] A_dina; //matrix A element value 
+
+    logic [:0] element_buffer; // storing current element
+    logic [1:0] element_counter; // 4 clock cycles per element
+    logic [255:0] row_buffer; // storing row
+    logic [9:0] matrix_counter; // 1024 elements in matrix
     
+    logic [4:0] A_addra; //matrix A loading address
+    logic [4:0] A_addrb; //matrix A recieving address
+    logic [4:0] B_addra; //matrix B loading address
+    logic [4:0] B_addrb; //matrix B recieving address
+    logic [255:0] A_dina; //matrix A element value 
+    
+    always_comb begin
+      bram_rst = rst | bad;
+    end
 
 
     always_ff @(posedge eth_refclk) begin
         if (rst) begin
             downtime <= 1'b1;
-            info <= 0;
             loading <= 0;
-            retrieving <= 0;
-            info_counter <= 0;
+            transmitting <= 0;
             element_data <== 0;
-            matrix_a_size <= 0;
-            matrix_b_size <= 0;
-
         end
         
         else if (downtime) begin
-            if (axiiv) begin
-                downtime <= 0;
-            end
-
+          if (axiiv) begin
+              downtime <= 0;
+              loading <= 1'b1;
+              row_buffer <= {axiid, 0};
+              matrix_counter <=  1'b1;
+          end
         end
-        else if (info) begin
-        end
+        
         else if (loading) begin
+          if (axiiv) begin
+            //element filled
+            if (element_counter == 2'b11) begin
+              //filled matrix
+              if(matrix_counter%32   ) begin
+                matrix_counter <= 0;
+                loading <= 0;
+                transmitting <= 1'b1;
+                complete <= 1'b1;
+              end
+
+              element_counter <= 0;
+              matrix_counter <= matrix_counter + 1'b1;
+              
+              row_buffer[255-(matrix_counter%32)*8:248-(matrix_counter%32)*8] <= {element_buffer, axiid} // 31 different areas of 8
+            end
+            //filling element
+            else begin
+              element_counter <= element_counter + 1'b1;
+              element_buffer[5-element_counter*2:4-element_counter*2] <= axiid;// 00=[7:6], 01=[5:4], 10=[3:2], 11=[1:0]
+            end
+          end
         end
-        else begin
+
+        else if (transmitting)begin
+          complete <= 1'b1;
+          
         end
     end
+
+
 
     always_ff @(posedge inter_refclk) begin
         if (retrieving) begin
@@ -112,7 +140,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8,
     .addra(B_addra),    // Write address bus, width determined from RAM_DEPTH
     .addrb(B_addrb),    // Read address bus, width determined from RAM_DEPTH
     .dina(B_dina),      // RAM input data, width determined from RAM_WIDTH
-    .clka(eth_refclk),      // Write clock
+    .clka(eth_refclk),       // Write clock
     .clkb(inter_refclk),      // Read clock
     .wea(B_wea),        // Write enable
     .enb(B_enb),        // Read Enable, for additional power savings, disable when not in use
