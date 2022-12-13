@@ -71,7 +71,8 @@ module matrix_loader_tb;
         axiiv = 0;
         #20
         //REST
-        for (int i = 0; i<31; i = i+1) begin
+        for (int i = 0; i<34; i = i+1) begin
+            requested_a_row = i%5;
             #20;
         end
 

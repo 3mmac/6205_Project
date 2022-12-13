@@ -44,11 +44,11 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic [255:0] A_dina, B_dina, A_dout, B_dout; //BRAM data
     logic A_wea, B_wea, A_enb, B_enb, A_regceb, B_regceb;
  
-    logic [4:0] [1:0] A_addr_buffer;
+    logic [1:0] [4:0] A_addr_buffer;
 
     always_comb begin
       bram_rst = rst | bad;
-
+      A_addrb = requested_a_row;
     end
 
 
@@ -72,6 +72,10 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           //nothing with BRAM port a should be happening
           A_wea <= 0;
           B_wea <= 0;
+
+        end
+        
+        else if (loading) begin
           if (axiiv) begin
             //element filled
             if (element_counter == 2'b11) begin
@@ -134,17 +138,14 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           //BRAM allowing reads
           A_enb <= 1'b1;
           A_regceb <= 1'b1;
-          
-          if (A_addrb== 5'b11111) begin
-            downtime <= 1'b1;
-            transmitting <= 0;
-          end
+    
 
-          A_addr_buffer[0] <= A_addrb;
+          A_addr_buffer[0] <= requested_a_row;
           A_addr_buffer[1] <= A_addr_buffer[0];
           addr_out <= A_addr_buffer[1];
 
           a_row_out <= A_dout;
+          A_addrb <= A_addrb + 1'b1;
 
         end
 
@@ -194,4 +195,4 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
 endmodule
 
-`default_nettype wire
+`default_nettype wire          addr_out <= A_addr_buffer;
