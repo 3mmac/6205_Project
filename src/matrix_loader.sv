@@ -35,7 +35,6 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic loading;
     logic transmitting;
 
-
     logic [5:0] element_buffer; // storing current element
     logic [1:0] element_counter; // 4 clock cycles per element
     logic [255:0] row_buffer; // storing row
@@ -44,27 +43,12 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic [4:0] A_addra, A_addrb, B_addra, B_addrb; //BRAM address
     logic [255:0] A_dina, B_dina, A_dout, B_dout; //BRAM data
     logic A_wea, B_wea, A_enb, B_enb, A_regceb, B_regceb;
-
-    assign A_wea = 0;
-    assign A_enb = 0;
-    assign A_regceb = 0;   
-    assign B_wea = 0;
-    assign B_enb = 0;
-    assign B_regceb = 0; 
-
+ 
+    logic [4:0] [1:0] A_addr_buffer;
 
     always_comb begin
       bram_rst = rst | bad;
-      if (downtime) begin
-          A_wea = 0;
-          A_enb = 0;
-          A_regceb = 0;   
-          B_wea = 0;
-          B_enb = 0;
-          B_regceb = 0; 
-      end else if (loading) begin
-        // A_addr = matrix_counter;
-      end
+
     end
 
 
@@ -84,9 +68,10 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
               row_buffer <= {axiid, 254'd0};
               matrix_counter <=  1'b1;
           end
-        end
-        
-        else if (loading) begin
+
+          //nothing with BRAM port a should be happening
+          A_wea <= 0;
+          B_wea <= 0;
           if (axiiv) begin
             //element filled
             if (element_counter == 2'b11) begin
@@ -95,9 +80,11 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                 matrix_counter <= 0;
                 element_counter <= 0;
                 loading <= 0;
+                transmitting <= 1'b1;
                 complete <= 1'b1;
-                a_row_out <= {row_buffer[255:8], element_buffer, axiid};
-                addr_out <= 5'b11111;
+                A_dina <= {row_buffer[255:8], element_buffer, axiid};
+                A_addra <= 5'b11111;
+                A_wea <= 1'b1;
               end
               
               //only a filling row
@@ -107,10 +94,14 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                 
                 //filled row
                 if ((matrix_counter+1)%32 == 0) begin
-                  a_row_out <= {row_buffer[255:8], element_buffer, axiid};
-                  addr_out <= matrix_counter/32;
-                end else begin
+                  A_dina <= {row_buffer[255:8], element_buffer, axiid};
+                  A_addra <= matrix_counter/32;
+                  A_wea <= 1'b1;
+                end 
+                
+                else begin
                   row_buffer[(255-(matrix_counter%32))-:8] <= {element_buffer, axiid};
+                  A_wea <= 0;
                 end
               end
             end
@@ -118,6 +109,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
             else begin
               element_counter <= element_counter + 1'b1;
               element_buffer[(5-element_counter*2)-: 2] <= axiid;
+              A_wea <= 0;
             end
           end
         end
@@ -125,13 +117,34 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
         else if (transmitting)begin
           complete <= 1'b1;
           
+          //BRAM no longer allowing writes
+          A_wea <= 0;
         end
     end
 
 
-
     always_ff @(posedge inter_refclk) begin
-        if (transmitting) begin
+        if (rst) begin
+          A_addrb <= 0;
+          A_enb <= 1'b1;
+          A_regceb <= 1'b1;
+        end
+
+        else if (transmitting) begin
+          //BRAM allowing reads
+          A_enb <= 1'b1;
+          A_regceb <= 1'b1;
+          
+          if (A_addrb== 5'b11111) begin
+            downtime <= 1'b1;
+            transmitting <= 0;
+          end
+
+          A_addr_buffer[0] <= A_addrb;
+          A_addr_buffer[1] <= A_addr_buffer[0];
+          addr_out <= A_addr_buffer[1];
+
+          a_row_out <= A_dout;
 
         end
 
