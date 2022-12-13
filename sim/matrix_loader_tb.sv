@@ -1,9 +1,8 @@
-default_nettype none
+`default_nettype none
 `timescale 1ns / 1ps
 
 module matrix_loader_tb;
-    logic eth_clk;
-    logic inter_clk;
+    logic clk;
     logic rst;
 
     logic axiiv;
@@ -17,9 +16,9 @@ module matrix_loader_tb;
     logic complete;
 
 
-    matrix_loader uut(
+    matrix_loader#() uut(
         .inter_refclk(clk),
-        .ether_refclk(clk),
+        .eth_refclk(clk),
         .rst(rst),
 
         .axiiv(axiiv),
@@ -48,43 +47,34 @@ module matrix_loader_tb;
         rst = 1;
         #20;
         rst = 0;
-        #20
-        #20
-        #20
-        
-        rxd= 2'b11;
         #20;
-        crsdv = 1'b1;
-        rxd= 2'b00;
         #20;
-        crsdv = 1'b1;
-        rxd= 2'b01;
         #20;
-        
-        //PREAMBLE & SFD
-        for(int i = 0; i <31; i = i+1) begin
-            crsdv = 1'b1;
-            rxd = 2'b10;
-            #20;
-        end
-        crsdv = 1'b1;
-        rxd = 2'b11;
-        #20;
-
-        //REST
-        for (int i = 0; i<6040; i = i+1) begin
-            if(i%3 == 0) begin
-                crsdv = 1'b1;
-                rxd = 2'b11;               
-            end else begin
-                crsdv = 1'b1;
-                rxd = 2'b01;
+        //MATRIX
+        for(int i = 0; i<32; i=i+1) begin
+            //ROW
+            for(int j = 0; j <32; j = j+1) begin
+                //ELEMENT CREATION
+                for(int k = 0; k<4; k=k+1) begin
+                    if(i==j)begin
+                        axiiv = 1'b1;
+                        axiid = 0;
+                    end else begin
+                        axiid = 2'b11;
+                        axiiv = 1'b1;
+                    end
+                    #20;
+                end
             end
+        end
+        #20;
+        axiid = 0;
+        axiiv = 0;
+        //REST
+        for (int i = 0; i<10; i = i+1) begin
             #20;
         end
-        crsdv = 0;
-        #20
-        crsdv = 0;
+
 
     $display("Finishing Sim");
     $finish;

@@ -13,15 +13,15 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                         input wire rst,
 
                         input wire axiiv,
-                        input wire axiid,
+                        input wire [1:0] axiid,
 
                         input wire [$clog2(MAX_SIZE_A)-1:0] requested_a_row,
                         input wire [$clog2(MAX_SIZE_B)-1:0] requested_b_col,
 
                         
-                        output logic [$clog2(MAX_SIZE_A)-1:0] addr_out;
-                        output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
-                        output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out,
+                        output logic [$clog2(MAX_SIZE_A)-1:0] addr_out,
+                        output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
+                        output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out,
                         output logic complete
                     );
 
@@ -45,10 +45,28 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic [4:0] A_addrb; //matrix A recieving address
     logic [4:0] B_addra; //matrix B loading address
     logic [4:0] B_addrb; //matrix B recieving address
-    logic [255:0] A_dina; //matrix A element value 
-    
+    logic [255:0] A_dina; //matrix A element value
+    logic [255:0] B_dina;  //matrix B element value
+    logic [255:0] A_matrix_out;
+    logic A_wea;
+    logic A_enb;
+    logic A_regceb;
+    logic B_wea;
+    logic B_enb;
+    logic B_regceb;
+
+    assign A_wea = 0;
+    assign A_enb = 0;
+    assign A_regceb = 0;   
+    assign B_wea = 0;
+    assign B_enb = 0;
+    assign B_regceb = 0; 
+
+
     always_comb begin
       bram_rst = rst | bad;
+      if (downtime) begin
+      end
     end
 
 
@@ -56,15 +74,16 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
         if (rst) begin
             downtime <= 1'b1;
             loading <= 0;
-            transmitting <= 0;
-            element_data <== 0;
+
+            element_counter <= 0;
+            matrix_counter <= 0;
         end
         
         else if (downtime) begin
           if (axiiv) begin
               downtime <= 0;
               loading <= 1'b1;
-              row_buffer <= {axiid, 0};
+              row_buffer <= {axiid, 254'd0};
               matrix_counter <=  1'b1;
           end
         end
@@ -76,25 +95,32 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
               //filled matrix
               if(matrix_counter == 10'd1023) begin
                 matrix_counter <= 0;
+                element_counter <= 0;
                 loading <= 0;
                 complete <= 1'b1;
+                a_row_out <= {row_buffer[255:8], element_buffer,axiid};
+                addr_out <= 5'b11111;
               end
-
-              element_counter <= 0;
-              matrix_counter <= matrix_counter + 1'b1;
               
-              //for testing purposes
-              if (matrix_counter%32 == 0) begin
-                a_row_out = row_buffer;
+              //only a filling row
+              else begin
+                element_counter <= 0;
+                matrix_counter <= matrix_counter + 1'b1;
+                
+                //for testing purposes: FILLED ROW
+                if (matrix_counter%32 == 0) begin
+                  a_row_out <= row_buffer;
+                  addr_out <= matrix_counter%32;
+                end
+                //for testing purposes
+                
+                row_buffer[(255-(matrix_counter%32))-:8] <= {element_buffer, axiid};
               end
-              //for testing purposes
-
-              row_buffer[255-(matrix_counter%32)*8:248-(matrix_counter%32)*8] <= {element_buffer, axiid} // 31 different areas of 8
             end
             //filling element
             else begin
               element_counter <= element_counter + 1'b1;
-              element_buffer[5-element_counter*2:4-element_counter*2] <= axiid;// 00=[7:6], 01=[5:4], 10=[3:2], 11=[1:0]
+              element_buffer[(5-element_counter*2)-: 2] <= axiid;
             end
           end
         end
@@ -107,19 +133,19 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
 
 
-    always_ff @(posedge inter_refclk) begin
-        if (retrieving) begin
-        end
+    // always_ff @(posedge inter_refclk) begin
+    //     if (retrieving) begin
+    //     end
 
-        else begin
-        end
-    end
+    //     else begin
+    //     end
+    // end
 
 
 //  Xilinx Simple Dual Port 2 Clock RAM
   xilinx_simple_dual_port_2_clock_ram #(
-    .RAM_WIDTH(MAX_COL_SIZE_A),                       // Specify RAM data width
-    .RAM_DEPTH(MAX_ELEMENT_SIZE*MAX_ROW_SIZE_A),                     // Specify RAM depth (number of entries)
+    .RAM_WIDTH(MAX_SIZE_A*MAX_ELEMENT_SIZE),                       // Specify RAM data width
+    .RAM_DEPTH(MAX_SIZE_A),                     // Specify RAM depth (number of entries)
     .RAM_PERFORMANCE("HIGH_PERFORMANCE"), // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
     .INIT_FILE("")                        // Specify name/location of RAM initialization file if using one (leave blank if not)
   ) Matrix_A_BRAM (
@@ -132,13 +158,13 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     .enb(A_enb),        // Read Enable, for additional power savings, disable when not in use
     .rstb(rst),      // Output reset (does not affect memory contents)
     .regceb(A_regceb),  // Output register enable
-    .doutb(a_row_out)     // RAM output data, width determined from RAM_WIDTH
+    .doutb(A_matrix_out)     // RAM output data, width determined from RAM_WIDTH
   );
 
 //  Xilinx Simple Dual Port 2 Clock RAM
   xilinx_simple_dual_port_2_clock_ram #(
-    .RAM_WIDTH(MAX_ROW_SIZE_B),                       // Specify RAM data width
-    .RAM_DEPTH(MAX_ELEMENT_SIZE*MAX_COL_SIZE_B),                     // Specify RAM depth (number of entries)
+    .RAM_WIDTH(MAX_SIZE_B*MAX_ELEMENT_SIZE),                       // Specify RAM data width
+    .RAM_DEPTH(MAX_SIZE_B),                     // Specify RAM depth (number of entries)
     .RAM_PERFORMANCE("HIGH_PERFORMANCE"), // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
     .INIT_FILE("")                        // Specify name/location of RAM initialization file if using one (leave blank if not)
   ) Matrix_B_BRAM (
