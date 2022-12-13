@@ -74,16 +74,21 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
             //element filled
             if (element_counter == 2'b11) begin
               //filled matrix
-              if(matrix_counter%32   ) begin
+              if(matrix_counter == 10'd1023) begin
                 matrix_counter <= 0;
                 loading <= 0;
-                transmitting <= 1'b1;
                 complete <= 1'b1;
               end
 
               element_counter <= 0;
               matrix_counter <= matrix_counter + 1'b1;
               
+              //for testing purposes
+              if (matrix_counter%32 == 0) begin
+                a_row_out = row_buffer;
+              end
+              //for testing purposes
+
               row_buffer[255-(matrix_counter%32)*8:248-(matrix_counter%32)*8] <= {element_buffer, axiid} // 31 different areas of 8
             end
             //filling element
