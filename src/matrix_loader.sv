@@ -147,7 +147,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
         end
 
         else if (transmitting)begin
-          complete <= 1'b1;
+          complete <= 0;
           
           //BRAM no longer allowing writes
           A_wea <= 0;

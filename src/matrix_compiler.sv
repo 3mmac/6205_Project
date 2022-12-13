@@ -17,13 +17,17 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                         output logic valid_data_out
     );
 
-   logic [MAX_ELEMENT_SIZE*MAX_SIZE_A*MAX_SIZE_B-1:0] addra;
-   logic [MAX_ELEMENT_SIZE*MAX_SIZE_A*MAX_SIZE_B-1:0] addrb;
+   logic [$clog2(MAX_SIZE_A)-1:0] addra;
+   logic [$clog2(MAZ_SIZE_B)-1:0] addrb;
+   logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] dina, row_out;
+   logic wea, enb, regceb;
+
    
    logic [MAX_ELEMENT_SIZE*MAX_SIZE_A-1:0] data_buffer;
 
    logic downtime;
    logic loading;
+   logic transmitting;
 
    always_ff @(posedge inter_refclk) begin
       if (rst) begin
@@ -34,7 +38,8 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          if (valid_data_in) begin
             downtime <= 0;
             loading <= 1'b1;
-            buffer[]
+            data_buffer[(255-8*col_addr)-: 8] <= matrix_element;
+            data_buffer 
          end
       end
    end
@@ -44,8 +49,8 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
 
 //  Xilinx Simple Dual Port 2 Clock RAM
   xilinx_simple_dual_port_2_clock_ram #(
-    .RAM_WIDTH(MAX_SIZE_B),                       // Specify RAM data width
-    .RAM_DEPTH(MAX_ELEMENT_SIZE*MAX_SIZE_B),      // Specify RAM depth (number of entries)
+    .RAM_WIDTH(MAX_SIZE_A*MAX_ELEMENT_SIZE),                       // Specify RAM data width
+    .RAM_DEPTH(MAX_SIZE_B),      // Specify RAM depth (number of entries)
     .RAM_PERFORMANCE("HIGH_PERFORMANCE"), // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
     .INIT_FILE("")                        // Specify name/location of RAM initialization file if using one (leave blank if not)
   ) Matrix_B_BRAM (
