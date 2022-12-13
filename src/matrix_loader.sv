@@ -15,11 +15,11 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                         input wire axiiv,
                         input wire axiid,
 
-                        input wire requested_a_row,
-                        input wire requested_b_col,
+                        input wire [$clog2(MAX_SIZE_A)-1:0] requested_a_row,
+                        input wire [$clog2(MAX_SIZE_B)-1:0] requested_b_col,
 
                         
-                        output logic addr_out;
+                        output logic [$clog2(MAX_SIZE_A)-1:0] addr_out;
                         output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
                         output logic [MAX_ROW_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out,
                         output logic complete
@@ -36,7 +36,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic transmitting;
 
 
-    logic [:0] element_buffer; // storing current element
+    logic [5:0] element_buffer; // storing current element
     logic [1:0] element_counter; // 4 clock cycles per element
     logic [255:0] row_buffer; // storing row
     logic [9:0] matrix_counter; // 1024 elements in matrix
