@@ -19,7 +19,8 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                         input wire [$clog2(MAX_SIZE_B)-1:0] requested_b_col,
 
                         
-                        output logic [$clog2(MAX_SIZE_A)-1:0] addr_out,
+                        output logic [$clog2(MAX_SIZE_A)-1:0] a_addr_out,
+                        output logic [$clog2(MAX_SIZE_B)-1:0] b_addr_out,
                         output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
                         output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out,
                         output logic complete
@@ -35,6 +36,9 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic loading;
     logic transmitting;
 
+    logic A;
+    logic B;
+
     logic [5:0] element_buffer; // storing current element
     logic [1:0] element_counter; // 4 clock cycles per element
     logic [255:0] row_buffer; // storing row
@@ -45,10 +49,12 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic A_wea, B_wea, A_enb, B_enb, A_regceb, B_regceb;
  
     logic [1:0] [4:0] A_addr_buffer;
+    logic [1:0] [4:0] B_addr_buffer;
 
     always_comb begin
       bram_rst = rst | bad;
       A_addrb = requested_a_row;
+      B_addrb = requested_b_col;
     end
 
 
@@ -59,6 +65,9 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
             element_counter <= 0;
             matrix_counter <= 0;
+
+            A <= 0;
+            B <= 0;
         end
         
         else if (downtime) begin
@@ -67,6 +76,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
               loading <= 1'b1;
               row_buffer <= {axiid, 254'd0};
               matrix_counter <=  1'b1;
+              A <= 1'b1;
           end
 
           //nothing with BRAM port a should be happening
@@ -79,16 +89,26 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           if (axiiv) begin
             //element filled
             if (element_counter == 2'b11) begin
-              //filled matrix
+              //filled matrixrequested_b_row
               if(matrix_counter == 10'd1023) begin
                 matrix_counter <= 0;
                 element_counter <= 0;
-                loading <= 0;
-                transmitting <= 1'b1;
-                complete <= 1'b1;
-                A_dina <= {row_buffer[255:8], element_buffer, axiid};
-                A_addra <= 5'b11111;
-                A_wea <= 1'b1;
+          
+                if (A) begin
+                  A_dina <= {row_buffer[255:8], element_buffer, axiid};
+                  A_addra <= 5'b11111;
+                  A_wea <= 1'b1;
+                  A <= 0;
+                  B <= 1'b1;
+                end else if (B) begin
+                  B_dina <= {row_buffer[255:8], element_buffer, axiid};
+                  B_addra <= 5'b11111;
+                  B_wea <= 1'b1;
+                  loading <= 0;
+                  transmitting <= 1'b1;
+                  complete <= 1'b1;
+                  B <= 0;
+                end
               end
               
               //only a filling row
@@ -98,14 +118,21 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                 
                 //filled row
                 if ((matrix_counter+1)%32 == 0) begin
-                  A_dina <= {row_buffer[255:8], element_buffer, axiid};
-                  A_addra <= matrix_counter/32;
-                  A_wea <= 1'b1;
+                  if(A) begin
+                    A_dina <= {row_buffer[255:8], element_buffer, axiid};
+                    A_addra <= matrix_counter/32;
+                    A_wea <= 1'b1;
+                  end else if (B) begin
+                    B_dina <= {row_buffer[255:8], element_buffer, axiid};
+                    B_addra <= matrix_counter/32;
+                    B_wea <= 1'b1;
+                  end
                 end 
                 
                 else begin
                   row_buffer[(255-(matrix_counter%32))-:8] <= {element_buffer, axiid};
                   A_wea <= 0;
+                  B_wea <= 0;
                 end
               end
             end
@@ -114,6 +141,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
               element_counter <= element_counter + 1'b1;
               element_buffer[(5-element_counter*2)-: 2] <= axiid;
               A_wea <= 0;
+              B_wea <= 0;
             end
           end
         end
@@ -123,6 +151,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           
           //BRAM no longer allowing writes
           A_wea <= 0;
+          B_wea <= 0;
         end
     end
 
@@ -130,22 +159,31 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     always_ff @(posedge inter_refclk) begin
         if (rst) begin
           A_addrb <= 0;
-          A_enb <= 1'b1;
-          A_regceb <= 1'b1;
+          A_enb <= 0;
+          A_regceb <= 0;
+
+          B_addrb <= 0;
+          B_enb <= 0;
+          B_regceb <= 0;
+
         end
 
         else if (transmitting) begin
           //BRAM allowing reads
           A_enb <= 1'b1;
           A_regceb <= 1'b1;
-    
+          B_enb <= 1'b1;
+          B_regceb <= 1'b1;
 
           A_addr_buffer[0] <= requested_a_row;
           A_addr_buffer[1] <= A_addr_buffer[0];
-          addr_out <= A_addr_buffer[1];
+          a_addr_out <= A_addr_buffer[1];
+          B_addr_buffer[0] <= requested_b_col;
+          B_addr_buffer[1] <= B_addr_buffer[0];
+          b_addr_out <= B_addr_buffer[1];
 
           a_row_out <= A_dout;
-          A_addrb <= A_addrb + 1'b1;
+          b_col_out <= B_dout;
 
         end
 
