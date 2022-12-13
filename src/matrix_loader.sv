@@ -41,19 +41,9 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic [255:0] row_buffer; // storing row
     logic [9:0] matrix_counter; // 1024 elements in matrix
     
-    logic [4:0] A_addra; //matrix A loading address
-    logic [4:0] A_addrb; //matrix A recieving address
-    logic [4:0] B_addra; //matrix B loading address
-    logic [4:0] B_addrb; //matrix B recieving address
-    logic [255:0] A_dina; //matrix A element value
-    logic [255:0] B_dina;  //matrix B element value
-    logic [255:0] A_matrix_out;
-    logic A_wea;
-    logic A_enb;
-    logic A_regceb;
-    logic B_wea;
-    logic B_enb;
-    logic B_regceb;
+    logic [4:0] A_addra, A_addrb, B_addra, B_addrb; //BRAM address
+    logic [255:0] A_dina, B_dina, A_dout, B_dout; //BRAM data
+    logic A_wea, B_wea, A_enb, B_enb, A_regceb, B_regceb;
 
     assign A_wea = 0;
     assign A_enb = 0;
@@ -66,6 +56,14 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     always_comb begin
       bram_rst = rst | bad;
       if (downtime) begin
+          A_wea = 0;
+          A_enb = 0;
+          A_regceb = 0;   
+          B_wea = 0;
+          B_enb = 0;
+          B_regceb = 0; 
+      end else if (loading) begin
+        // A_addr = matrix_counter;
       end
     end
 
@@ -98,7 +96,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                 element_counter <= 0;
                 loading <= 0;
                 complete <= 1'b1;
-                a_row_out <= {row_buffer[255:8], element_buffer,axiid};
+                a_row_out <= {row_buffer[255:8], element_buffer, axiid};
                 addr_out <= 5'b11111;
               end
               
@@ -107,14 +105,13 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                 element_counter <= 0;
                 matrix_counter <= matrix_counter + 1'b1;
                 
-                //for testing purposes: FILLED ROW
-                if (matrix_counter%32 == 0) begin
-                  a_row_out <= row_buffer;
-                  addr_out <= matrix_counter%32;
+                //filled row
+                if ((matrix_counter+1)%32 == 0) begin
+                  a_row_out <= {row_buffer[255:8], element_buffer, axiid};
+                  addr_out <= matrix_counter/32;
+                end else begin
+                  row_buffer[(255-(matrix_counter%32))-:8] <= {element_buffer, axiid};
                 end
-                //for testing purposes
-                
-                row_buffer[(255-(matrix_counter%32))-:8] <= {element_buffer, axiid};
               end
             end
             //filling element
@@ -133,13 +130,14 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
 
 
-    // always_ff @(posedge inter_refclk) begin
-    //     if (retrieving) begin
-    //     end
+    always_ff @(posedge inter_refclk) begin
+        if (transmitting) begin
 
-    //     else begin
-    //     end
-    // end
+        end
+
+        else begin
+        end
+    end
 
 
 //  Xilinx Simple Dual Port 2 Clock RAM
@@ -158,7 +156,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     .enb(A_enb),        // Read Enable, for additional power savings, disable when not in use
     .rstb(rst),      // Output reset (does not affect memory contents)
     .regceb(A_regceb),  // Output register enable
-    .doutb(A_matrix_out)     // RAM output data, width determined from RAM_WIDTH
+    .doutb(A_dout)     // RAM output data, width determined from RAM_WIDTH
   );
 
 //  Xilinx Simple Dual Port 2 Clock RAM
@@ -177,7 +175,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     .enb(B_enb),        // Read Enable, for additional power savings, disable when not in use
     .rstb(rst),      // Output reset (does not affect memory contents)
     .regceb(B_regceb),  // Output register enable
-    .doutb(b_col_out)     // RAM output data, width determined from RAM_WIDTH
+    .doutb(B_dout)     // RAM output data, width determined from RAM_WIDTH
   );
 
 

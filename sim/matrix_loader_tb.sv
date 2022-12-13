@@ -67,9 +67,9 @@ module matrix_loader_tb;
                 end
             end
         end
-        #20;
         axiid = 0;
         axiiv = 0;
+        #20
         //REST
         for (int i = 0; i<10; i = i+1) begin
             #20;
