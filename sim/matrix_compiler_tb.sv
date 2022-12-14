@@ -90,13 +90,13 @@ module matrix_compiler_tb;
         // end
 
         valid_data_in = 0;
-        #20
-        #20
-        #20
-        #20
-        #20
-        #20
-        #20
+        #20;
+        #20;
+        #20;
+        #20;
+        #20;
+        #20;
+        #20;
         data_request = 1'b1;
         //REST
         for (int i = 0; i<1026*4; i = i+1) begin
