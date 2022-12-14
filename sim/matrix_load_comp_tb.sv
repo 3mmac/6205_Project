@@ -1,15 +1,17 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module matrix_loader_tb;
+module matrix_load_comp_tb;
     logic clk;
     logic rst;
 
     logic axiiv;
     logic [1:0] axiid;
+    logic valid_request;
     logic [4:0] requested_a_row;
     logic [4:0] requested_b_col;
     
+    logic valid_rows;
     logic [4:0] a_addr_out;
     logic [4:0] b_addr_out;
     logic [255:0] a_row_out;
@@ -24,9 +26,11 @@ module matrix_loader_tb;
 
         .axiiv(axiiv),
         .axiid(axiid),
+	.valid_request(valid_request),
         .requested_a_row(requested_a_row),
         .requested_b_col(requested_b_col),
 
+	.valid_out(valid_rows),
         .a_addr_out(a_addr_out),
         .b_addr_out(b_addr_out),
         .a_row_out(a_row_out),
@@ -47,8 +51,9 @@ module matrix_loader_tb;
 	.matB_col(b_col_out),
 	.row_in (a_addr_out),
 	.col_in (b_addr_out),
-	.val_rows(load_val),
+	.val_rows(valid_rows),
 
+	.new_request(valid_request),
 	.row_req(requested_a_row),
 	.col_req(requested_b_col),
 
@@ -82,8 +87,8 @@ module matrix_loader_tb;
     end
 
     initial begin
-        $dumpfile("matrix_loader.vcd");
-        $dumpvars(0, matrix_loader_tb);
+        $dumpfile("matrix_load_comp.vcd");
+        $dumpvars(0, matrix_load_comp_tb);
         $display("Starting Sim");
         clk = 0;
         rst = 0;
@@ -112,12 +117,12 @@ module matrix_loader_tb;
             end
         end
         //MATRIX B
-        for(int i = 0; i<32; i=i+1) begin
+        for(int a = 0; a<32; a=a+1) begin
             //ROW
-            for(int j = 0; j <32; j = j+1) begin
+            for(int b = 0; b <32; b = b+1) begin
                 //ELEMENT CREATION
-                for(int k = 0; k<4; k=k+1) begin
-                    if(i==j)begin
+                for(int c = 0; c<4; c=c+1) begin
+                    if(a==b)begin
                         axiiv = 1'b1;
                         axiid = 2'b11;
                     end else begin
@@ -130,14 +135,12 @@ module matrix_loader_tb;
         end
         axiid = 0;
         axiiv = 0;
-        #20
+        #20;
         //REST
-        for (int i = 0; i<34; i = i+1) begin
-            requested_a_row = i;
-            requested_b_col = i%5;
-            #20;
-        end
-
+  
+	for(int t=0; t<5000; t++) begin
+	  #20;
+	end
 
     $display("Finishing Sim");
     $finish;

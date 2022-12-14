@@ -14,7 +14,10 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                         input wire [MAX_ELEMENT_SIZE-1:0] matrix_element,
                         input wire data_request,
 
+<<<<<<< HEAD
                         output logic compile_done,
+=======
+>>>>>>> 24c546aff0da032d7996bb3c0fed9276964c0e8f
                         output logic [1:0] dibit,
                         output logic valid_data_out
     );
@@ -121,7 +124,6 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             old <= 1'b1;
             downtime <= 1'b1;
             transmit <= 0;
-            all_data_sent;
          end
       end
       else begin
