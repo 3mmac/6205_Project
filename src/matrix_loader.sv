@@ -15,10 +15,11 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                         input wire axiiv,
                         input wire [1:0] axiid,
 
+                        input 
                         input wire [$clog2(MAX_SIZE_A)-1:0] requested_a_row,
                         input wire [$clog2(MAX_SIZE_B)-1:0] requested_b_col,
 
-                        
+                        output 
                         output logic [$clog2(MAX_SIZE_A)-1:0] a_addr_out,
                         output logic [$clog2(MAX_SIZE_B)-1:0] b_addr_out,
                         output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
@@ -45,7 +46,17 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
     logic [9:0] matrix_counter; // 1024 elements in matrix
     
     logic [4:0] A_addra, A_addrb, B_addra, B_addrb; //BRAM address
-    logic [255:0] A_dina, B_dina, A_dout, B_dout; //BRAM data
+    logic [255:0] A_dina, B_dina, A                if (data_counter < 9'd183) begin
+                    if(~axiiv | buffer_data) begin
+                        axiod <= 0;
+                        axiov <= 1'b1;
+                        buffer_data <= 1'b1;
+                    end
+                end else begin
+                    if (buffer_data) begin
+
+                    end
+                end_dout, B_dout; //BRAM data
     logic A_wea, B_wea, A_enb, B_enb, A_regceb, B_regceb;
  
     logic [1:0] [4:0] A_addr_buffer;
@@ -55,7 +66,17 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
       bram_rst = rst | bad;
       A_addrb = requested_a_row;
       B_addrb = requested_b_col;
-    end
+    end                if (data_counter < 9'd183) begin
+                    if(~axiiv | buffer_data) begin
+                        axiod <= 0;
+                        axiov <= 1'b1;
+                        buffer_data <= 1'b1;
+                    end
+                end else begin
+                    if (buffer_data) begin
+
+                    end
+                end
 
 
     always_ff @(posedge eth_refclk) begin
@@ -68,7 +89,17 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
             A <= 0;
             B <= 0;
-        end
+        end                if (data_counter < 9'd183) begin
+                    if(~axiiv | buffer_data) begin
+                        axiod <= 0;
+                        axiov <= 1'b1;
+                        buffer_data <= 1'b1;
+                    end
+                end else begin
+                    if (buffer_data) begin
+
+                    end
+                end
         
         else if (downtime) begin
           if (axiiv) begin

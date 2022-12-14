@@ -10,22 +10,19 @@ module ether_out (
                     input wire data_complete, //is on for a single cycle the cycle after all data has been transmitted
 
                     output logic axiov,
-                    output logic [1:0] axiod
+                    output logic [1:0] axiod,
+                    output logic give_data
 );
     logic [175:0] HEADER;
     logic [4:0] gap_counter; // gap is 32 cycles
     logic [6:0] header_counter; //header is 88 cycles
-    logic [9:0] data_counter; //needs at least 184 cycles of continuous valid data
     logic [3:0] fcs_counter; //fcs is 16 cycles
+
     logic transmit_header;
     logic transmit_data;
     logic transmit_fcs;
     logic transmit_gap;
     logic downtime;
-
-    logic buffer_data;
-    logic [9:0] buffer_counter;
-    logic [500:0] buffer; // at most, preamble singal = data signal (need to wait 88 clock cycles when interal clock = ethernet clock)
 
     logic [1:0] fcs_in;
     logic fcs_in_valid;
@@ -37,7 +34,6 @@ module ether_out (
 
     assign HEADER = 176'h5555_5555_5555_5557_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_9000;
 
-    //no time crossing right now
     crc32 my_crc (.clk(clk), .rst(crc_rst), .axiiv(fcs_in_valid), .axiid(fcs_in), .axiov(fcs_out_valid), .axiod(fcs_out));
 
     always_comb begin
@@ -58,11 +54,8 @@ module ether_out (
         if(rst) begin
             gap_counter <= 0;
             header_counter <= 0;
-            data_counter <= 0;
             fcs_counter <= 0;
-            buffer_counter <= 0;
 
-            buffer_data <= 0;
             transmit_header <= 0;
             transmit_data <= 0;
             transmit_fcs <= 0;
@@ -87,21 +80,13 @@ module ether_out (
                 else begin
                     header_counter <= header_counter + 1'b1;
                     //transmit appropriate portion of header based on counter
+                    axiod <= HEADER[(175-2*header_counter)-:2]
+                    axiov <= 1'b1;
                 end
             end
 
             else if (transmit_data) begin
-                if (data_counter < 9'd183) begin
-                    if(~axiiv | buffer_data) begin
-                        axiod <= 0;
-                        axiov <= 1'b1;
-                        buffer_data <= 1'b1;
-                    end
-                end else begin
-                    if (buffer_data) begin
 
-                    end
-                end
 
             end
 
@@ -109,12 +94,6 @@ module ether_out (
             end
             else if (transmit_gap) begin
             end
-        end
-    end
-
-    //storing inputs
-    always_ff @(posedge clk) begin
-        if (axiiv) begin
         end
     end
 

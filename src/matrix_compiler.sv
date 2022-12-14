@@ -93,11 +93,13 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          addrb <= 0;
          old <= 0;
          element_counter <= 0;
+         valid_data_out <= 0;
       end 
       else if (transmit) begin
          //requesting reading
          enb <= 1'b1;
          regceb <= 1'b1;
+         valid_data_out <= 1'b1;
          element_counter <= (element_counter==2'b11)? 0: element_counter + 1'b1;
          if (element_counter == 2'b11) addrb <= addrb + 1'b1;
 
@@ -112,6 +114,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          regceb <= 0;
          addrb <= 0;
          old <= 0;
+         valid_data_out <= 0;
       end
 
    end
