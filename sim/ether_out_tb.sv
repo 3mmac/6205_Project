@@ -7,7 +7,7 @@ module ether_out_tb;
 
     logic axiiv;
     logic [1:0] axiid;
-    logic preamble_signal, data_complete;
+    logic preamble_signal, data_complete+;
     logic [1:0] axiod_out;
 
 

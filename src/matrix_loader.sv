@@ -70,6 +70,8 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
             A <= 0;
             B <= 0;
+
+            complete <= 0;
         end               
         
         else if (downtime) begin
@@ -84,6 +86,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           //nothing with BRAM port a should be happening
           A_wea <= 0;
           B_wea <= 0;
+          complete <= 0;
 
         end
         
@@ -115,6 +118,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
               
               //only a filling row
               else begin
+                complete <= 0;
                 element_counter <= 0;
                 matrix_counter <= matrix_counter + 1'b1;
                 
@@ -201,7 +205,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           B_addrb <= 0;
           B_enb <= 0;
           B_regceb <= 0;
-          
+
           valid_out <= 0;
         end
     end

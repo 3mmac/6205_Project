@@ -14,7 +14,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                         input wire [MAX_ELEMENT_SIZE-1:0] matrix_element,
                         input wire data_request,
 
-                        output logic load_complete,
+                        output logic all_data_sent,
                         output logic [1:0] dibit,
                         output logic valid_data_out
     );
@@ -78,11 +78,9 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             if(&bram_tracker) begin
                loading <= 0;
                waiting <= 1'b1;
-               load_complete <= 1'b1;
             end   
          end
          else if(waiting) begin
-            load_complete <= 0;
             wea <= 0;
             bram_tracker <= 0;
          end
@@ -123,6 +121,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             old <= 1'b1;
             downtime <= 1'b1;
             transmit <= 0;
+            all_data_sent;
          end
       end
       else begin
