@@ -21,6 +21,8 @@ module top_level(
     parameter MAX_COL_SIZE_A = 32;
     parameter MAX_ROW_SIZE_B = 32;
     parameter MAX_COL_SIZE_B = 32;
+    parameter MAX_SIZE_A = 32;
+    parameter MAX_SIZE_B = 32;
 
     logic inter_refclk;
     
@@ -65,14 +67,37 @@ module top_level(
                 my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
     //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
     
-
-    //matrix_loader
+    logic valid_out, complete;
+    logic [$clog2(MAX_SIZE_A)-1:0] a_addr_out;
+    logic [$clog2(MAX_SIZE_B)-1:0] b_addr_out;
+    logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out;
+    logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out;
+    
+    matrix_loader #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
+                my_loader (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire),
+                            .valid_request(), .requested_a_row(), .requested_b_col(),
+                            .valid_out(valid_out), .a_addr_out(a_addr_out), .b_addr_out(b_addr_out), .a_row_out(a_row_out), .b_col_out(b_col_out), .complete(complete));
     
     //algo_holder
     
-    //matrix_compiler
-    //bitorder_out
-    //ether_out
+    logic compile_done;
+    logic [1:0] dibit;
+    logic valid_data_out;
+
+    matrix_compiler #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
+                my_compiler (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), 
+                            .valid_data_in(), .row_addr(), .col_addr(), .matrix_element(), .data_request(eth_out_request), 
+                            .compile_done(compile_done), .dibit(dibit), .valid_data_out(valid_data_out));
+    logic [1:0] reordered_dibit;
+    logic reordered_valid;
+
+    bitorder_out my_bitorder_out (.clk(eth_refclk), .rst(btnc), .axiiv(valid_data_out), .axiid(dibit),
+                                    .axiov(reordered_valid), .axiod(reordered_dibit));
+    
+    logic ether_out_request;
+
+    ether_out my_ether_out (.clk(eth_refclk), .(rst), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
+                            .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request))
 
 
    always_ff @(posedge eth_refclk) begin
