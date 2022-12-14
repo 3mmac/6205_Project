@@ -15,7 +15,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                         input wire data_request,
 
                         output logic compile_done,
-                        output logic [1:0] dibit,
+                        output logic [7:0] byte_out,
                         output logic valid_data_out
     );
 
@@ -28,12 +28,16 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
    logic loading;
    logic waiting;
    logic transmit;
+
+   logic [1:0] output_counter;
+   logic [2:0] delay;
    
    always_comb begin
-      dibit = doutb[(7-2*element_counter)-:2];
+      byte_out = doutb;
       bram_rst = rst | old;
    end
 
+   logic [$clog2(MAX_ELEMENT_SIZE/2)-1:0] element_counter;
    always_ff @(posedge inter_refclk) begin
       if(rst) begin
          downtime <= 1'b1;
@@ -55,9 +59,6 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                loading <= 1'b1;
                //write to BRAM
                wea <= 1'b1;
-               dina <= matrix_element;
-               addra <= (row_addr*MAX_SIZE_B)+col_addr;
-               //tracking update
                bram_tracker[((row_addr*MAX_SIZE_B)+col_addr)+:1] <= 1'b1;
             end else begin
                wea <= 0;
@@ -94,8 +95,6 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
       end
    end
 
-   logic [$clog2(MAX_ELEMENT_SIZE/2)-1:0] element_counter;
-
    always_ff @(posedge eth_refclk) begin
       if(rst) begin
          enb <= 0;
@@ -104,34 +103,53 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          old <= 0;
          element_counter <= 0;
          valid_data_out <= 0;
+         output_counter <= 0;
       end
       else if (waiting) begin
          addrb <= 0;
+         output_counter <= 0;
          if (data_request) begin
             waiting <= 0;
             transmit <= 1'b1;
+            delay <= 0;
          end
       end 
       else if (transmit) begin
+         if(delay < 3'b101) begin
+            delay <= 3'b001 + delay;
+            valid_data_out <= 0;
+         end else begin
+            valid_data_out <= 1'b1;
+         end
+         output_counter <= (output_counter == 2'b11)? 0: output_counter + 1'b1;
          //requesting reading
          enb <= 1'b1;
          regceb <= 1'b1;
-         valid_data_out <= 1'b1;
-         element_counter <= (element_counter==2'b11)? 0: element_counter + 1'b1;
-         if (element_counter == 2'b11) addrb <= addrb + 1'b1;
+         addrb <= (output_counter ==  2'b11)? addrb + 1'b1: addrb;
+         
 
          if (addrb == 10'd1023) begin
             old <= 1'b1;
             downtime <= 1'b1;
             transmit <= 0;
+            delay <= 0;
          end
       end
       else begin
-         enb <= 0;
-         regceb <= 0;
-         addrb <= 0;
-         old <= 0;
-         valid_data_out <= 0;
+         valid_data_out <= (delay < 3'b101)? 1'b1 : 0;
+         if (delay < 3'b100) begin
+            valid_data_out <= 1'b1;
+            delay <= delay + 1'b1;
+            enb <= 1'b1;
+            regceb <= 1'b1;
+         end else begin
+            valid_data_out <= 0;
+            enb <= 0;
+            regceb <= 0;
+            addrb <= 0;
+            old <= 0;
+         end
+         output_counter <= 0;
       end
 
    end

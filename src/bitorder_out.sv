@@ -6,13 +6,13 @@ module bitorder_out (
                 input wire clk,
                 input wire rst,
                 input wire axiiv,
-                input wire [1:0] axiid,
+                input wire [3:0] axiid,
 
                 output logic axiov,
                 output logic [1:0] axiod 
                 );
 
-    //recieved in four clock cycles - 7:6 -> 5:4 -> 3:2 -> 1:0
+    //recieved in one clock cycles - 7:6 -> 5:4 -> 3:2 -> 1:0
     //output in four clock cycle - 1:0 -> 3:2 -> 5:4 -> 7:6
 
     logic [7:0] bufferA;
