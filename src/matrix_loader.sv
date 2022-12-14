@@ -164,11 +164,9 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
 
     always_ff @(posedge inter_refclk) begin
         if (rst) begin
-          A_addrb <= 0;
           A_enb <= 0;
           A_regceb <= 0;
 
-          B_addrb <= 0;
           B_enb <= 0;
           B_regceb <= 0;
 
@@ -198,11 +196,10 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
         end
 
         else begin
-          A_addrb <= 0;
           A_enb <= 0;
           A_regceb <= 0;
 
-          B_addrb <= 0;
+
           B_enb <= 0;
           B_regceb <= 0;
 

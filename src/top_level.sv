@@ -54,7 +54,7 @@ module top_level(
 
 
 
-    clk_wiz_0 my_divider (.clk_100mhz(clk_100mhz),.eth_refclk(eth_refclk),.inter_refclk(inter_refclk));
+    clk_wiz_0_clk_wiz my_divider (.clk_100mhz(clk_100mhz),.eth_refclk(eth_refclk),.inter_refclk(inter_refclk));
 
     ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth));
 
@@ -63,8 +63,8 @@ module top_level(
     
     cksum my_cksum (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .done(done_out), .kill(kill_out));
     
-    aggregate #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_ROW_SIZE_A(MAX_ROW_SIZE_A), .MAX_COL_SIZE_A(MAX_COL_SIZE_A)) 
-                my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
+    //aggregate #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_ROW_SIZE_A(MAX_ROW_SIZE_A), .MAX_COL_SIZE_A(MAX_COL_SIZE_A)) 
+                //my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
     //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
     
     logic valid_rows, complete;
@@ -118,14 +118,14 @@ module top_level(
                             .data_request(eth_out_request), .compile_done(compile_done), .byte_out(byte_out), .valid_data_out(valid_data_out));
     
     logic [1:0] reordered_dibit;
-    logic reordered_valid;
+    logic reordered_valid, eth_out_request;
 
     bitorder_out my_bitorder_out (.clk(eth_refclk), .rst(btnc), .axiiv(valid_data_out), .axiid(byte_out),
                                     .axiov(reordered_valid), .axiod(reordered_dibit));
 
 
-    ether_out my_ether_out (.clk(eth_refclk), .(rst), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
-                            .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request))
+    ether_out my_ether_out (.clk(eth_refclk), .rst(btnc), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
+                            .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request));
 
 
    always_ff @(posedge eth_refclk) begin

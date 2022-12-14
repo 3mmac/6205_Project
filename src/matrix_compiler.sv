@@ -40,7 +40,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
    logic [$clog2(MAX_ELEMENT_SIZE/2)-1:0] element_counter;
    always_ff @(posedge inter_refclk) begin
       if(rst) begin
-         downtime <= 1'b1;
+         downtime <= 0;
          loading <= 0;
          
          wea <= 0;
@@ -79,7 +79,6 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             //every element has been given
             if(&bram_tracker) begin
                loading <= 0;
-               waiting <= 1'b1;
                compile_done <= 1'b1;
             end   
          end
@@ -91,6 +90,8 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          else if (transmit) begin
             wea <= 0;
             bram_tracker <= 0;
+         end else begin
+            downtime <= 1'b1;
          end
       end
    end
@@ -130,7 +131,6 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
 
          if (addrb == 10'd1023) begin
             old <= 1'b1;
-            downtime <= 1'b1;
             transmit <= 0;
             delay <= 0;
          end
@@ -150,6 +150,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             old <= 0;
          end
          output_counter <= 0;
+         if (compile_done) waiting <= 1'b1;
       end
 
    end
