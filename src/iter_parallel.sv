@@ -1,9 +1,9 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module iter_parallel (
-  input wire [31:0][7:0] row1,
-  input wire [31:0][7:0] col2,
+module iter_parallel #(parameter ROW_SIZE=3)
+  (input wire [ROW_SIZE-1:0][7:0] row1,
+  input wire [ROW_SIZE-1:0][7:0] col2,
   input wire axiiv,
   input wire clk,
   input wire rst,
@@ -15,14 +15,14 @@ module iter_parallel (
   logic [7:0] sum;
   logic [1:0] iter_state;
 
-  logic [31:0][7:0] row_buff;
-  logic [31:0][7:0] col_buff;
+  logic [ROW_SIZE-1:0][7:0] row_buff;
+  logic [ROW_SIZE:0][7:0] col_buff;
 
   logic [7:0] el1;
   logic [7:0] el2;
-  logic [31:0][7:0] prods;
+  logic [ROW_SIZE-1:0][7:0] prods;
 
-  logic [31:0][7:0] sums;
+  logic [ROW_SIZE-1:0][7:0] sums;
 
   always_ff @(posedge clk) begin
     if(rst) begin
@@ -37,7 +37,7 @@ module iter_parallel (
 	  iter_state <= 1;
 	end
       end else if (iter_state == 1) begin
-	for(int i=0; i<32; i++) begin
+	for(int i=0; i<ROW_SIZE; i++) begin
           prods[i] <= row_buff[i]*col_buff[i];
         end
 	iter_state <= 2;
@@ -54,11 +54,11 @@ module iter_parallel (
   
   always @(*) begin
     sums[0] = prods[0];
-    for(int j=1; j<32; j++) begin
+    for(int j=1; j<ROW_SIZE; j++) begin
       sums[j] = sums[j-1]+prods[j];
     end
   end
-  assign axiod = sums[31];
+  assign axiod = sums[ROW_SIZE-1];
  
 endmodule
 

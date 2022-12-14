@@ -1,12 +1,12 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module iter_control (
-	input wire clk_in,
+module iter_control #(parameter ROW_SIZE=3)
+	(input wire clk_in,
 	input wire rst_in,
 	input wire complete,
-	input wire [31:0][7:0] matA_row,
-        input wire [31:0][7:0] matB_col,
+	input wire [ROW_SIZE-1:0][7:0] matA_row,
+        input wire [ROW_SIZE-1:0][7:0] matB_col,
 	input wire [4:0] row_in,
 	input wire [4:0] col_in, 
 	input wire val_rows,
@@ -25,8 +25,8 @@ module iter_control (
 	logic [4:0] addr_row;
 	logic [4:0] addr_col;
 
-	logic [31:0][7:0] row_store;
-	logic [31:0][7:0] col_store;
+	logic [ROW_SIZE-1:0][7:0] row_store;
+	logic [ROW_SIZE-1:0][7:0] col_store;
 
 
 	logic complete_old;
@@ -38,7 +38,7 @@ module iter_control (
 	logic [7:0] element_out;
 
 
-	iter_parallel dot_prod (
+	iter_parallel #(.ROW_SIZE(ROW_SIZE)) dot_prod (
 		.row1(row_store),
 		.col2(col_store),
 		.axiiv(compute_val),
@@ -86,8 +86,8 @@ module iter_control (
 		row_out <= addr_row;
 		col_out <= addr_col;
 		
-		if(addr_col >= 31) begin
-		  if(addr_row >= 31) begin
+		if(addr_col >= ROW_SIZE-1) begin
+		  if(addr_row >= ROW_SIZE-1) begin
 		    done <= 1;
 		    control_state <= 0;
 		  end else begin
