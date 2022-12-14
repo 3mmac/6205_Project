@@ -75,7 +75,6 @@ module top_level(
     
     // //aggregate #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_ROW_SIZE_A(MAX_ROW_SIZE_A), .MAX_COL_SIZE_A(MAX_COL_SIZE_A)) 
     // //            my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
-    // //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
     
     logic valid_rows, complete;
     logic [$clog2(MAX_SIZE_A)-1:0] a_addr_out;
@@ -98,8 +97,29 @@ module top_level(
     logic alg_val;
     logic done;
 
-    dummy_alg test_dummy(
-  	.clk_in(inter_refclk),
+    //dummy_alg test_dummy(
+    // 	.clk_in(inter_refclk),
+    //	.rst_in(btnc),
+    //	.complete(complete),
+    //	.matA_row(a_row_out),
+    //	.matB_col(b_col_out),
+    //	.row_in (a_addr_out),
+    //	.col_in (b_addr_out),
+    //	.val_rows(valid_rows),
+
+    //  	.new_request(valid_request),
+    //	.row_req(a_request),
+    //	.col_req(b_request),
+
+    //	.matrix_val(output_element),
+    //	.row_out(alg_row),
+    //	.col_out(alg_col),
+    //	.valid_out(alg_val),
+    //	.done(done),
+    //  .led(led[5]));
+
+    iter_control iter_alg(
+     	.clk_in(inter_refclk),
   	.rst_in(btnc),
   	.complete(complete),
   	.matA_row(a_row_out),
@@ -116,8 +136,7 @@ module top_level(
   	.row_out(alg_row),
   	.col_out(alg_col),
   	.valid_out(alg_val),
-  	.done(done),
-    .led(led[5]));
+  	.done(done));
     
     logic compile_done;
     logic [7:0] byte_out;
@@ -136,15 +155,48 @@ module top_level(
                                     .axiov(reordered_valid), .axiod(reordered_dibit), .led(led[7]));
 
 
-    ether_out my_ether_out (.clk(eth_refclk), .rst(btnu), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
-                            .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request), .led(led[8]));
+    //ether_out my_ether_out (.clk(eth_refclk), .rst(btnu), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
+    //                        .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request), .led(led[8]));
 
+   logic [31:0] seven_seg_val;
+   seven_segment_controller my_seven_seg(.clk_in(inter_refclk), .rst_in(btnc), .val_in(seven_seg_val), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an));
+					 
+
+   logic [MAX_SIZE_A-1:0][MAX_SIZE_B-1:0][MAX_ELEMENT_SIZE-1:0] out_array;
+   logic [4:0] disp_row;
+   logic [4:0] disp_col;
+   logic [MAX_ELEMENT_SIZE-1:0] disp_val;
+
+   always_comb begin
+     disp_val = out_array[disp_row][disp_col];
+     seven_seg_val[31:24] = disp_row;
+     seven_seg_val[23:16] = disp_col;
+     seven_seg_val[7:0] = disp_val; 
+   end
 
    always_ff @(posedge eth_refclk) begin
        if(btnc) begin
            counter <= 0;
            val_in <= 0;
        end
+
+       if(btnu) begin
+	   if(disp_col >= MAX_SIZE_B-1) begin
+	     disp_col <= 0;
+	     if(disp_row >= MAX_SIZE_A-1) begin
+		disp_row <= 0;
+	     end else begin
+		disp_row <= disp_row+1;
+	     end
+	   end else begin
+	     disp_col <= disp_col+1;
+	   end
+       end
+
+       if(alg_val) begin
+         out_array[alg_row][alg_col] <= alg_val;
+       end
+
        if ((prev_axiov_eth == 1'b1) & (axiov_eth == 0)) begin
            counter <= counter + 1'b1;
        end
