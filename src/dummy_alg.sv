@@ -19,7 +19,8 @@ module dummy_alg (
 	output logic [4:0] col_out,
 	output logic [7:0] matrix_val,
 	output logic valid_out,
-	output logic done
+	output logic done,
+	output logic led
 	);
 
 
@@ -38,6 +39,7 @@ module dummy_alg (
 	    matrix_val <= 0;
 	    valid_out <= 0;
 	    control_state <= 0;
+		led <= 0;
 	  end else begin
 	    if(control_state==0 && !complete_old && complete) begin
 	      control_state <= 1;
@@ -54,6 +56,7 @@ module dummy_alg (
 		if(col_in >= 31) begin
 		  if(row_in >= 31) begin
 		    done <= 1;
+			led <= 1'b1;
 		    control_state <= 0;
 		    new_request <= 0;
 		  end else begin

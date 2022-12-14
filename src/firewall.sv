@@ -9,7 +9,8 @@ module firewall (
                 input wire [1:0] axiid,
 
                 output logic axiov,
-                output logic [1:0] axiod 
+                output logic [1:0] axiod,
+                output logic led 
                 );
 
     //recieved in four clock cycle - 7:6 -> 5:4 -> 3:2 -> 1:0
@@ -26,20 +27,29 @@ module firewall (
     assign broadcast_MAC = 48'hFF_FF_FF_FF_FF_FF;
     assign personal_MAC = 48'hFE_ED_B0_BA_F1_DD;
 
+    assign axiod = axiid;
+
     always_comb begin
         if(axiiv) begin
             if (~prev_axiiv) begin
                 axiov = 0;
+                led = 0;
             end else if(addr_counter < 56) begin
+                led = 0;
                 axiov = 0;
             end else if (invalid_b & invalid_p) begin
                 axiov = 0;
+                led = 0;
             end else begin
-                axiod = axiid;
                 axiov = axiiv;
+                led = 1;
             end
         end else if(~axiiv) begin
             axiov = 0;
+            led = 0;
+        end else begin
+            axiov = 0;
+            led = 0;
         end
     end
 
@@ -155,6 +165,10 @@ module firewall (
                         6'd23: begin
                             invalid_b <= (invalid_b)? 1'b1: ((axiid == broadcast_MAC[1:0])? 0: 1'b1);
                             invalid_p <= (invalid_p)? 1'b1: ((axiid == personal_MAC[1:0])? 0: 1'b1);                           
+                        end
+                        default: begin
+                            invalid_b <= 1;
+                            invalid_p <= 1;
                         end
                     endcase
                     addr_counter <= addr_counter + 1'b1;

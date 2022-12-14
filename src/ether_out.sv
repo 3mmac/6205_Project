@@ -10,7 +10,8 @@ module ether_out (
 
                     output logic axiov,
                     output logic [1:0] axiod,
-                    output logic data_request
+                    output logic data_request,
+                    output logic led
 );
     logic [175:0] HEADER;
     logic [4:0] gap_counter; // gap is 32 cycles
@@ -62,6 +63,7 @@ module ether_out (
 
             fcs_in_valid <= 0;
             fcs_in <= 0;
+            led <= 0;
         end
         else begin
             if (downtime) begin
@@ -75,7 +77,7 @@ module ether_out (
 
             else if (transmit_header) begin
                 data_request <= (header_counter == 7'd79)? 1'b1: 0;
-
+                led <= 1'b1;
                 if (header_counter == 7'd87) begin
                     transmit_header <= 0;
                     transmit_data <= 1'b1;

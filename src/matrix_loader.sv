@@ -24,7 +24,8 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
                         output logic [$clog2(MAX_SIZE_B)-1:0] b_addr_out,
                         output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out,
                         output logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out,
-                        output logic complete
+                        output logic complete,
+                        output logic led
                     );
 
     // BRAM address = 0 through 31
@@ -72,6 +73,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
             B <= 0;
 
             complete <= 0;
+            led <= 0;
         end               
         
         else if (downtime) begin
@@ -158,6 +160,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           //BRAM no longer allowing writes
           A_wea <= 0;
           B_wea <= 0;
+          led <= 1'b1;
         end
     end
 

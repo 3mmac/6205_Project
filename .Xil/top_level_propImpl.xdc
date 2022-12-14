@@ -65,6 +65,8 @@ set_property src_info {type:XDC file:1 line:84 export:INPUT save:INPUT read:READ
 set_property -dict { PACKAGE_PIN U13   IOSTANDARD LVCMOS33 } [get_ports { an[7] }]; #IO_L23N_T3_A02_D18_14 Sch=an[7]
 set_property src_info {type:XDC file:1 line:91 export:INPUT save:INPUT read:READ} [current_design]
 set_property -dict { PACKAGE_PIN N17   IOSTANDARD LVCMOS33 } [get_ports { btnc }]; #IO_L9P_T1_DQS_14 Sch=btnc
+set_property src_info {type:XDC file:1 line:92 export:INPUT save:INPUT read:READ} [current_design]
+set_property -dict { PACKAGE_PIN M18   IOSTANDARD LVCMOS33 } [get_ports { btnu }]; #IO_L4N_T0_D05_14 Sch=btnu
 set_property src_info {type:XDC file:1 line:240 export:INPUT save:INPUT read:READ} [current_design]
 set_property -dict { PACKAGE_PIN B3    IOSTANDARD LVCMOS33 } [get_ports { eth_rstn }]; #IO_L10P_T1_AD15P_35 Sch=eth_rstn
 set_property src_info {type:XDC file:1 line:241 export:INPUT save:INPUT read:READ} [current_design]
@@ -75,5 +77,9 @@ set_property src_info {type:XDC file:1 line:244 export:INPUT save:INPUT read:REA
 set_property -dict { PACKAGE_PIN D10   IOSTANDARD LVCMOS33 } [get_ports { eth_rxd[1] }]; #IO_L19N_T3_VREF_16 Sch=eth_rxd[1]
 set_property src_info {type:XDC file:1 line:245 export:INPUT save:INPUT read:READ} [current_design]
 set_property -dict { PACKAGE_PIN B9    IOSTANDARD LVCMOS33 } [get_ports { eth_txen }]; #IO_L11N_T1_SRCC_16 Sch=eth_txen
+set_property src_info {type:XDC file:1 line:246 export:INPUT save:INPUT read:READ} [current_design]
+set_property -dict { PACKAGE_PIN A10   IOSTANDARD LVCMOS33 } [get_ports { eth_txd[0] }]; #IO_L14P_T2_SRCC_16 Sch=eth_txd[0]
+set_property src_info {type:XDC file:1 line:247 export:INPUT save:INPUT read:READ} [current_design]
+set_property -dict { PACKAGE_PIN A8    IOSTANDARD LVCMOS33 } [get_ports { eth_txd[1] }]; #IO_L12N_T1_MRCC_16 Sch=eth_txd[1]
 set_property src_info {type:XDC file:1 line:248 export:INPUT save:INPUT read:READ} [current_design]
 set_property -dict { PACKAGE_PIN D5    IOSTANDARD LVCMOS33 } [get_ports { eth_refclk }]; #IO_L11P_T1_SRCC_35 Sch=eth_refclk

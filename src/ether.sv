@@ -8,7 +8,8 @@ module ether (
                 input wire [1:0] rxd,       //Current Transmission (Big Endian Order)
 
                 output logic axiov,           //AXI output, valid signal
-                output logic [1:0] axiod    //AXI output, data bus
+                output logic [1:0] axiod,    //AXI output, data bus
+                output logic led
             );
 
     logic preamble_SFD_search;
@@ -24,6 +25,7 @@ module ether (
             start_invalid <= 0;
             transmit <= 0;
             transmit_counter <=0;
+            led <= 0;
         end else begin
 
             if (crsdv) begin
@@ -59,6 +61,7 @@ module ether (
                         if (crsdv) begin
                             axiov <= 1'b1;
                             axiod <= rxd;
+                            led <= 1'b1;
                         end else begin
                             transmit <= 0;
                             axiov <= 0;

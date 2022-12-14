@@ -9,7 +9,8 @@ module cksum (
                 input wire [1:0] axiid,
 
                 output logic done,
-                output logic kill
+                output logic kill,
+                output logic led
                 );
 
     //states: rest (00), waiting for crc32 result(11)
@@ -42,6 +43,7 @@ module cksum (
             prev_axiiv <= axiiv;
             packet <= 0;
             set <= 0;
+            led <= 0;
         end else begin
             prev_axiiv <= axiiv;
             if(~prev_axiiv & axiiv) begin
@@ -58,6 +60,7 @@ module cksum (
                     packet <= 0;
                     set <= 1'b1;
                 end 
+                led <= 11'b1;
             end else if (~axiiv & set) begin
             //BETWEEN PACKETS
                 set <= 0;

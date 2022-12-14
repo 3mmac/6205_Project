@@ -9,7 +9,8 @@ module bitorder (
                 input wire [1:0] axiid,
 
                 output logic axiov,
-                output logic [1:0] axiod 
+                output logic [1:0] axiod,
+                output logic led 
                 );
 
     //recieved in four clock cycle - 1:0 -> 3:2 -> 5:4 -> 7:6
@@ -29,6 +30,7 @@ module bitorder (
             counter_out <= 0;
             hotswap <= 0;
             completeA <= 0;
+            led <= 0;
         end else begin
             
             //FILLING BUFFERa, OUTPUTTING BUFFERb
@@ -123,6 +125,7 @@ module bitorder (
                         axiod <= bufferA[1:0];
                         axiov <= 1'b1;
                         counter_out <= ((counter_in == 2'b11) & axiiv)? 0: 3'b100;
+                        led <= 1'b1;
                     end
                     default: begin
                         axiov <= 0;

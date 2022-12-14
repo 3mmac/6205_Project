@@ -16,7 +16,8 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
 
                         output logic compile_done,
                         output logic [7:0] byte_out,
-                        output logic valid_data_out
+                        output logic valid_data_out,
+                        output logic led
     );
 
    logic [$clog2(MAX_SIZE_B*MAX_SIZE_A)-1:0] addra, addrb;
@@ -44,11 +45,10 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          loading <= 0;
          
          wea <= 0;
-         enb <= 0;
-         regceb <= 0;
 
          bram_tracker <= 0;
          compile_done <= 0;
+         led <= 0;
       end
       else begin
          if(downtime) begin
@@ -86,6 +86,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             wea <= 0;
             bram_tracker <= 0;
             compile_done <= 0;
+            led <= 1'b1;
          end
          else if (transmit) begin
             wea <= 0;

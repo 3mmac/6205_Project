@@ -9,7 +9,8 @@ module bitorder_out (
                 input wire [7:0] axiid,
 
                 output logic axiov,
-                output logic [1:0] axiod 
+                output logic [1:0] axiod,
+                output logic led 
                 );
 
     //recieved in one clock cycles - [7:6],[5:4],[3:2],[1:0]
@@ -24,6 +25,7 @@ module bitorder_out (
         if (rst) begin
             downtime <= 1'b1;
             flipping <= 0;
+            led <= 0;
         end else begin
             if(downtime) begin
                 if(axiiv) begin

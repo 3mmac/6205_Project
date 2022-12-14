@@ -4,6 +4,7 @@
 module top_level(
                     input wire clk_100mhz,
                     input wire btnc,
+                    input wire btnu,
                     input wire eth_crsdv,
                     input wire [1:0] eth_rxd,
 
@@ -48,7 +49,7 @@ module top_level(
     logic [31:0] val_in;
 
     assign eth_rstn = ~btnc;
-    assign led[13:0] = counter;
+    //assign led[13:0] = counter;
     assign led[15] = kill_out;
     assign led[14] = done_out;
 
@@ -56,16 +57,16 @@ module top_level(
 
     clk_wiz_0_clk_wiz my_divider (.clk_100mhz(clk_100mhz),.eth_refclk(eth_refclk),.inter_refclk(inter_refclk));
 
-    ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth));
+    ether my_ether(.clk(eth_refclk), .rst(btnc), .crsdv(eth_crsdv),.rxd(eth_rxd),.axiov(axiov_eth),.axiod(axiod_eth),.led(led[0]));
 
-    bitorder my_bitorder (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .axiov(axiov_bit), .axiod(axiod_bit));
-    firewall my_firewall (.clk(eth_refclk),.rst(btnc),.axiiv(axiov_bit),.axiid(axiod_bit),.axiov(axiov_fire),.axiod(axiod_fire));
+    bitorder my_bitorder (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .axiov(axiov_bit), .axiod(axiod_bit), .led(led[1]));
+    firewall my_firewall (.clk(eth_refclk),.rst(btnc),.axiiv(axiov_bit),.axiid(axiod_bit),.axiov(axiov_fire),.axiod(axiod_fire), .led(led[2]));
     
-    cksum my_cksum (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .done(done_out), .kill(kill_out));
+    cksum my_cksum (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_eth), .axiid(axiod_eth), .done(done_out), .kill(kill_out),.led(led[3]));
     
-    //aggregate #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_ROW_SIZE_A(MAX_ROW_SIZE_A), .MAX_COL_SIZE_A(MAX_COL_SIZE_A)) 
-                //my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
-    //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
+    // //aggregate #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_ROW_SIZE_A(MAX_ROW_SIZE_A), .MAX_COL_SIZE_A(MAX_COL_SIZE_A)) 
+    // //            my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
+    // //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
     
     logic valid_rows, complete;
     logic [$clog2(MAX_SIZE_A)-1:0] a_addr_out;
@@ -79,7 +80,7 @@ module top_level(
     
     matrix_loader #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
                 my_loader (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire),
-                            .valid_request(valid_request), .requested_a_row(a_request), .requested_b_col(b_request),
+                            .valid_request(valid_request), .requested_a_row(a_request), .requested_b_col(b_request), .led(led[4]),
                             .valid_out(valid_rows), .a_addr_out(a_addr_out), .b_addr_out(b_addr_out), .a_row_out(a_row_out), .b_col_out(b_col_out), .complete(complete));
     
     logic [7:0] output_element;
@@ -106,7 +107,8 @@ module top_level(
   	.row_out(alg_row),
   	.col_out(alg_col),
   	.valid_out(alg_val),
-  	.done(done));
+  	.done(done),
+    .led(led[5]));
     
     logic compile_done;
     logic [7:0] byte_out;
@@ -115,17 +117,18 @@ module top_level(
     matrix_compiler #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
                 my_compiler (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), 
                             .valid_data_in(alg_val), .row_addr(alg_row), .col_addr(alg_col), .matrix_element(output_element), 
-                            .data_request(eth_out_request), .compile_done(compile_done), .byte_out(byte_out), .valid_data_out(valid_data_out));
+                            .data_request(eth_out_request), .compile_done(compile_done), .byte_out(byte_out), .valid_data_out(valid_data_out),
+                            .led(led[6]));
     
     logic [1:0] reordered_dibit;
     logic reordered_valid, eth_out_request;
 
     bitorder_out my_bitorder_out (.clk(eth_refclk), .rst(btnc), .axiiv(valid_data_out), .axiid(byte_out),
-                                    .axiov(reordered_valid), .axiod(reordered_dibit));
+                                    .axiov(reordered_valid), .axiod(reordered_dibit), .led(led[7]));
 
 
-    ether_out my_ether_out (.clk(eth_refclk), .rst(btnc), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
-                            .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request));
+    ether_out my_ether_out (.clk(eth_refclk), .rst(btnu), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
+                            .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request), .led(led[8]));
 
 
    always_ff @(posedge eth_refclk) begin
