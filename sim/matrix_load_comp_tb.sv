@@ -43,25 +43,45 @@ module matrix_load_comp_tb;
     logic alg_val;
     logic done;
 
-    dummy_alg test_dummy(
-	.clk_in(clk),
-	.rst_in(rst),
-	.complete(complete),
-	.matA_row(a_row_out),
-	.matB_col(b_col_out),
-	.row_in (a_addr_out),
-	.col_in (b_addr_out),
-	.val_rows(valid_rows),
+  //  dummy_alg test_dummy(
+  //	.clk_in(clk),
+  //	.rst_in(rst),
+  //	.complete(complete),
+  //	.matA_row(a_row_out),
+  //	.matB_col(b_col_out),
+  //	.row_in (a_addr_out),
+  //	.col_in (b_addr_out),
+  //	.val_rows(valid_rows),
 
-	.new_request(valid_request),
-	.row_req(requested_a_row),
-	.col_req(requested_b_col),
+  //	.new_request(valid_request),
+  //	.row_req(requested_a_row),
+  //	.col_req(requested_b_col),
 
-	.matrix_val(output_element),
-	.row_out(alg_row),
-	.col_out(alg_col),
-	.valid_out(alg_val),
-	.done(done));
+  //	.matrix_val(output_element),
+  //	.row_out(alg_row),
+  //	.col_out(alg_col),
+  //	.valid_out(alg_val),
+  //	.done(done));
+
+    iter_control test_iter(
+  	.clk_in(clk),
+  	.rst_in(rst),
+  	.complete(complete),
+  	.matA_row(a_row_out),
+  	.matB_col(b_col_out),
+  	.row_in (a_addr_out),
+  	.col_in (b_addr_out),
+  	.val_rows(valid_rows),
+
+  	.new_request(valid_request),
+  	.row_req(requested_a_row),
+  	.col_req(requested_b_col),
+
+  	.matrix_val(output_element),
+  	.row_out(alg_row),
+  	.col_out(alg_col),
+  	.valid_out(alg_val),
+  	.done(done));
 
     logic [1:0] dibit;
     logic valid_data_out;
@@ -105,11 +125,11 @@ module matrix_load_comp_tb;
             for(int j = 0; j <32; j = j+1) begin
                 //ELEMENT CREATION
                 for(int k = 0; k<4; k=k+1) begin
-                    if(i==j)begin
+                    if(i<3 && j<3)begin
                         axiiv = 1'b1;
-                        axiid = 0;
-                    end else begin
                         axiid = 2'b11;
+                    end else begin
+                        axiid = 0;
                         axiiv = 1'b1;
                     end
                     #20;
@@ -122,7 +142,7 @@ module matrix_load_comp_tb;
             for(int b = 0; b <32; b = b+1) begin
                 //ELEMENT CREATION
                 for(int c = 0; c<4; c=c+1) begin
-                    if(a==b)begin
+                    if(a<3 && b<3)begin
                         axiiv = 1'b1;
                         axiid = 2'b11;
                     end else begin

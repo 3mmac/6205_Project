@@ -67,18 +67,46 @@ module top_level(
                 my_aggregate (.clk(eth_refclk), .rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire), .axiov(axiov_agg), .axiod(axiod_agg));
     //seven_segment_controller#(.COUNT_TO('d100_000)) my_ssc (.clk_in(eth_refclk), .rst_in(btnc), .val_in(val_in), .cat_out({cg, cf, ce, cd, cc, cb, ca}), .an_out(an)); 
     
-    logic valid_out, complete;
+    logic valid_rows, complete;
     logic [$clog2(MAX_SIZE_A)-1:0] a_addr_out;
     logic [$clog2(MAX_SIZE_B)-1:0] b_addr_out;
     logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] a_row_out;
     logic [MAX_SIZE_A*MAX_ELEMENT_SIZE-1:0] b_col_out;
+    logic [$clog2(MAX_SIZE_A)-1:0] a_request;
+    logic [$clog2(MAX_SIZE_B)-1:0] b_request;
+    logic valid_request;
+
     
     matrix_loader #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
                 my_loader (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), .axiiv(axiov_fire), .axiid(axiod_fire),
-                            .valid_request(), .requested_a_row(), .requested_b_col(),
-                            .valid_out(valid_out), .a_addr_out(a_addr_out), .b_addr_out(b_addr_out), .a_row_out(a_row_out), .b_col_out(b_col_out), .complete(complete));
+                            .valid_request(valid_request), .requested_a_row(a_request), .requested_b_col(b_request),
+                            .valid_out(valid_rows), .a_addr_out(a_addr_out), .b_addr_out(b_addr_out), .a_row_out(a_row_out), .b_col_out(b_col_out), .complete(complete));
     
-    //algo_holder
+    logic [7:0] output_element;
+    logic [4:0] alg_row;
+    logic [4:0] alg_col;
+    logic alg_val;
+    logic done;
+
+    dummy_alg test_dummy(
+  	.clk_in(inter_refclk),
+  	.rst_in(btnc),
+  	.complete(complete),
+  	.matA_row(a_row_out),
+  	.matB_col(b_col_out),
+  	.row_in (a_addr_out),
+  	.col_in (b_addr_out),
+  	.val_rows(valid_rows),
+
+  	.new_request(valid_request),
+  	.row_req(a_request),
+  	.col_req(b_request),
+
+  	.matrix_val(output_element),
+  	.row_out(alg_row),
+  	.col_out(alg_col),
+  	.valid_out(alg_val),
+  	.done(done));
     
     logic compile_done;
     logic [1:0] dibit;
@@ -86,7 +114,7 @@ module top_level(
 
     matrix_compiler #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
                 my_compiler (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), 
-                            .valid_data_in(), .row_addr(), .col_addr(), .matrix_element(), .data_request(eth_out_request), 
+                            .valid_data_in(alg_val), .row_addr(alg_row), .col_addr(alg_col), .matrix_element(output_element), .data_request(eth_out_request), 
                             .compile_done(compile_done), .dibit(dibit), .valid_data_out(valid_data_out));
     logic [1:0] reordered_dibit;
     logic reordered_valid;
