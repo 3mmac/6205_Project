@@ -13,20 +13,25 @@ module tb_iter_control;
   logic [7:0] mat_out;
   
   logic complete;
-  logic [5:0] row_in;
-  logic [5:0] col_in;
-  logic [5:0] row_req;
-  logic [5:0] col_req;
-  logic [5:0] row_out;
-  logic [5:0] col_out;
+  logic [4:0] row_in;
+  logic [4:0] col_in;
+  logic [4:0] row_req;
+  logic [4:0] col_req;
+  logic [4:0] row_out;
+  logic [4:0] col_out;
  
   logic new_request;
   logic done;
 
-  iter_control test_iter_control(.clk_in(clk), .rst_in(rst), .matA_row(row1), .matB_col(col2), .val_rows(val_rows),
-				 .row_in(row_in), .col_in(col_in), .row_req(row_req), .col_req(col_req), .new_request(new_request), 
-				 .row_out(row_out), .col_out(col_out), .matrix_val(mat_out),
-			         .complete(complete), .done(done), .valid_out(val_out));
+  //iter_control test_iter_control(.clk_in(clk), .rst_in(rst), .matA_row(row1), .matB_col(col2), .val_rows(val_rows),
+  //				 .row_in(row_in), .col_in(col_in), .row_req(row_req), .col_req(col_req), .new_request(new_request), 
+  //				 .row_out(row_out), .col_out(col_out), .matrix_val(mat_out),
+  //			         .complete(complete), .done(done), .valid_out(val_out));
+  
+  dummy_alg test_alg(.clk_in(clk), .rst_in(rst), .matA_row(row1), .matB_col(col2), .val_rows(val_rows),
+                               .row_in(row_in), .col_in(col_in), .row_req(row_req), .col_req(col_req), .new_request(new_request),
+                               .row_out(row_out), .col_out(col_out), .matrix_val(mat_out),
+                               .complete(complete), .done(done), .valid_out(val_out));
   
   logic [31:0][31:0] mat1 [7:0];
   logic [31:0][31:0] mat2 [7:0];
@@ -37,7 +42,7 @@ module tb_iter_control;
   end
 
   initial begin
-        $dumpfile("iter_control.vcd"); //file to store value change dump (vcd)
+        $dumpfile("iter_dummy.vcd"); //file to store value change dump (vcd)
         $dumpvars(0,tb_iter_control); //store everything at the current level and below
         $display("Starting Sim"); //print nice message
         clk = 0; //initialize clk (super important)

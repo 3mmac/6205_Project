@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module iter_control (
+module dummy_alg (
 	input wire clk_in,
 	input wire rst_in,
 	input wire complete,
@@ -22,36 +22,14 @@ module iter_control (
 	output logic done
 	);
 
-	logic [4:0] addr_row;
-	logic [4:0] addr_col;
-
-	logic [31:0][7:0] row_store;
-	logic [31:0][7:0] col_store;
-
 
 	logic complete_old;
 
 	logic [1:0] control_state;
 
-	logic val_out;
-	logic compute_val;
-	logic [7:0] element_out;
-
-
-	iter_parallel dot_prod (
-		.row1(row_store),
-		.col2(col_store),
-		.axiiv(compute_val),
-		.clk(clk_in),
-		.rst(rst_in),
-		.axiov(val_out),
-		.axiod(element_out));
-
 	always_ff @(posedge clk_in) begin
 	  complete_old <= complete;
 	  if(rst_in) begin
-	    addr_row <= 0;
-	    addr_col <= 0;
 	    row_out <= 0;
 	    col_out <= 0;
 	    row_req <= 0;
@@ -60,55 +38,41 @@ module iter_control (
 	    matrix_val <= 0;
 	    valid_out <= 0;
 	    control_state <= 0;
-	  end
-	  else begin
+	  end else begin
 	    if(control_state==0 && !complete_old && complete) begin
 	      control_state <= 1;
 	      row_req <=0;
 	      col_req <= 0;
 	      new_request <= 1;
-	    end else if (control_state==1) begin
 	      valid_out <= 0;
+	    end else if (control_state==1) begin
 	      if(val_rows) begin
-	        control_state <= 2;
-		compute_val <= 1;
-		addr_row <= row_in;
-		addr_col <= col_in;
-		row_store <= matA_row;
-		col_store <= matB_col;
-		new_request <= 0;
-	      end
-	    end else if (control_state == 2) begin
-	      compute_val <= 0;
-	      if(val_out) begin
-		matrix_val <= element_out;
-	        valid_out <= 1;
-		row_out <= addr_row;
-		col_out <= addr_col;
-		
-		if(addr_col >= 31) begin
-		  if(addr_row >= 31) begin
+		row_out <=  row_in;
+		col_out <= col_in;
+		matrix_val <= matA_row[col_in];
+		valid_out <= 1;
+		if(col_in >= 31) begin
+		  if(row_in >= 31) begin
 		    done <= 1;
 		    control_state <= 0;
 		  end else begin
-		    row_req <= addr_row+1;
+		    row_req <= row_in + 1;
 		    col_req <= 0;
 		    new_request <= 1;
-		    control_state <= 1;
 		  end
 		end else begin
-		  row_req <= addr_row;
-		  col_req <= addr_col + 1;
+		  row_req <= row_in;
+		  col_req <= col_in+1;
 		  new_request <= 1;
-		  control_state <= 1;
 		end
 	      end
-	    end 
+	    end
 	  end
 	end
-	
+	   	
 
 
 endmodule
 
 `default_nettype wire
+
