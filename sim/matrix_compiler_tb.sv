@@ -12,6 +12,7 @@ module matrix_compiler_tb;
     
     logic [1:0] dibit;
     logic valid_data_out;
+    logic data_request;
 
 
     matrix_compiler#() uut(
@@ -25,7 +26,8 @@ module matrix_compiler_tb;
         .matrix_element(matrix_element),
 
         .dibit(dibit),
-        .valid_data_out(valid_data_out));
+        .valid_data_out(valid_data_out),
+        .data_request(data_request));
 
     
     always begin
@@ -46,6 +48,7 @@ module matrix_compiler_tb;
         #20;
         #20;
         #20;
+        data_request = 0;
         //MATRIX A
         for(int i = 0; i<32; i=i+1) begin
             //ROW
@@ -88,9 +91,17 @@ module matrix_compiler_tb;
 
         valid_data_in = 0;
         #20
+        #20
+        #20
+        #20
+        #20
+        #20
+        #20
+        data_request = 1'b1;
         //REST
         for (int i = 0; i<1026*4; i = i+1) begin
             #20;
+            data_request = 0;
         end
     
 

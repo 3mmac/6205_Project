@@ -11,7 +11,7 @@ module ether_out (
 
                     output logic axiov,
                     output logic [1:0] axiod,
-                    output logic give_data
+                    output logic send_data
 );
     logic [175:0] HEADER;
     logic [4:0] gap_counter; // gap is 32 cycles

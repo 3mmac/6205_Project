@@ -12,7 +12,9 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
                         input wire [$clog2(MAX_SIZE_A)-1:0] row_addr,
                         input wire [$clog2(MAX_SIZE_B)-1:0] col_addr,
                         input wire [MAX_ELEMENT_SIZE-1:0] matrix_element,
+                        input wire data_request,
 
+                        output logic load_complete,
                         output logic [1:0] dibit,
                         output logic valid_data_out
     );
@@ -24,6 +26,7 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
 
    logic downtime;
    logic loading;
+   logic waiting;
    logic transmit;
    
    always_comb begin
@@ -74,8 +77,14 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
             //every element has been given
             if(&bram_tracker) begin
                loading <= 0;
-               transmit <= 1'b1;
+               waiting <= 1'b1;
+               load_complete <= 1'b1;
             end   
+         end
+         else if(waiting) begin
+            load_complete <= 0;
+            wea <= 0;
+            bram_tracker <= 0;
          end
          else if (transmit) begin
             wea <= 0;
@@ -94,6 +103,13 @@ module matrix_compiler #( parameter MAX_ELEMENT_SIZE = 8,
          old <= 0;
          element_counter <= 0;
          valid_data_out <= 0;
+      end
+      else if (waiting) begin
+         addrb <= 0;
+         if (data_request) begin
+            waiting <= 0;
+            transmit <= 1'b1;
+         end
       end 
       else if (transmit) begin
          //requesting reading
