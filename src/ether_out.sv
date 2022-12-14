@@ -7,7 +7,7 @@ module ether_out (
                     input wire axiiv,
                     input wire [1:0] axiid,
                     input wire preamble_signal,
-                    input wire data_complete, //is on for a single cycle the cycle after the last data has been transmitted
+                    //input wire compile_done, //is on for a single cycle the cycle after all values have been caluclated
 
                     output logic axiov,
                     output logic [1:0] axiod,
@@ -115,7 +115,7 @@ module ether_out (
             end
             else if (transmit_gap) begin
                 if (gap_counter == 5'd31) begin
-                    tansmit_gap <= 0;
+                    transmit_gap <= 0;
                     downtime <= 0;
                 end
                 gap_counter <= gap_counter + 1'b1;

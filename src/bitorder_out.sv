@@ -7,9 +7,7 @@ module bitorder_out (
                 input wire rst,
                 input wire axiiv,
                 input wire [1:0] axiid,
-                input wire data_end_in,
 
-                output logic data_end_out,
                 output logic axiov,
                 output logic [1:0] axiod 
                 );
@@ -34,7 +32,7 @@ module bitorder_out (
             completeA <= 0;
         end else begin
             
-            
+
 
             //FILLING BUFFERa, OUTPUTTING BUFFERb
             if(~hotswap) begin
