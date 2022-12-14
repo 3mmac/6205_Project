@@ -13,7 +13,6 @@ module dummy_alg (
 
 	output logic [4:0] row_req,
 	output logic [4:0] col_req,
-	output logic new_request,
 
 	output logic [4:0] row_out,
 	output logic [4:0] col_out,
@@ -43,7 +42,6 @@ module dummy_alg (
 	      control_state <= 1;
 	      row_req <=0;
 	      col_req <= 0;
-	      new_request <= 1;
 	      valid_out <= 0;
 	    end else if (control_state==1) begin
 	      if(val_rows) begin
@@ -58,12 +56,10 @@ module dummy_alg (
 		  end else begin
 		    row_req <= row_in + 1;
 		    col_req <= 0;
-		    new_request <= 1;
 		  end
 		end else begin
 		  row_req <= row_in;
 		  col_req <= col_in+1;
-		  new_request <= 1;
 		end
 	      end
 	    end

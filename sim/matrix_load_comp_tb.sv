@@ -45,6 +45,13 @@ module matrix_loader_tb;
 	.complete(complete),
 	.matA_row(a_row_out),
 	.matB_col(b_col_out),
+	.row_in (a_addr_out),
+	.col_in (b_addr_out),
+	.val_rows(load_val),
+
+	.row_req(requested_a_row),
+	.col_req(requested_b_col),
+
 	.matrix_val(output_element),
 	.row_out(alg_row),
 	.col_out(alg_col),
@@ -139,3 +146,4 @@ module matrix_loader_tb;
 endmodule
 
 `default_nettype wire
+
