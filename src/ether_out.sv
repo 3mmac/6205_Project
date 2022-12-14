@@ -7,11 +7,11 @@ module ether_out (
                     input wire axiiv,
                     input wire [1:0] axiid,
                     input wire preamble_signal,
-                    input wire data_complete, //is on for a single cycle the cycle after all data has been transmitted
+                    input wire data_complete, //is on for a single cycle the cycle after the last data has been transmitted
 
                     output logic axiov,
                     output logic [1:0] axiod,
-                    output logic send_data
+                    output logic data_request
 );
     logic [175:0] HEADER;
     logic [4:0] gap_counter; // gap is 32 cycles
@@ -72,6 +72,8 @@ module ether_out (
             end
 
             else if (transmit_header) begin
+                data_request <= (header_counter == 7'd28) 1'b1: 0;
+
                 if (header_counter == 7'd31) begin
                     transmit_header <= 0;
                     transmit_data <= 1'b1;
@@ -86,13 +88,37 @@ module ether_out (
             end
 
             else if (transmit_data) begin
-
-
+                if (data_complete) begin
+                    //update state
+                    transmit_data <= 0;
+                    transmit_fcs <= 1'b1;
+                    //assign outputs
+                    axiod <= fcs_out[31:30];
+                    axiov <= 1'b1;
+                    //update fcs values
+                    fcs_hold <= fcs_out;
+                    fcs_counter <= 1'b1;
+                end
+                else begin
+                    axiod <= axiid;
+                    axiov <= axiiv;
+                end
             end
 
             else if (transmit_fcs) begin
+                if (fcs_counter == 4'd15) begin
+                    transmit_fcs <= 0;
+                    transmit_gap <= 1'b1;
+                end
+                axiid <= fcs_hold[(31-fcs_counter*2)-: 2]
+                fcs_counter <= fcs_counter + 1'b1;
             end
             else if (transmit_gap) begin
+                if (gap_counter == 5'd31) begin
+                    tansmit_gap <= 0;
+                    downtime <= 0;
+                end
+                gap_counter <= gap_counter + 1'b1;
             end
         end
     end

@@ -9,7 +9,7 @@ module matrix_loader_tb;
     logic [1:0] axiid;
     logic [4:0] requested_a_row;
     logic [4:0] requested_b_col;
-
+    
     logic [4:0] a_addr_out;
     logic [4:0] b_addr_out;
     logic [255:0] a_row_out;
@@ -33,8 +33,7 @@ module matrix_loader_tb;
         .b_col_out(b_col_out),
         .complete(complete));
 
-
-
+    
     always begin
         #10;
         clk = !clk;         //Now #20 will wait a clock period
@@ -70,43 +69,26 @@ module matrix_loader_tb;
                 end
             end
         end
-        // //MATRIX OUTPUT
-        // for(int i = 0; i<32; i=i+1) begin
-        //     //ROW
-        //     if (i%2 == 0) begin
-        //         for(int j = 31; j >= 0; j = j-1) begin
-        //             //ELEMENT CREATION
-        //             valid_data_in = 1'b1;
-        //             row_addr = j;
-        //             col_addr = i;
-        //             matrix_element = ((i&j)==0)? 8'b1111_1111:{i,j};
-        //             #20;
-        //         end
-        //     end
-        // end
-        // for(int i = 0; i<32; i=i+1) begin
-        //     //ROW
-        //     if (i%2 == 1'b1) begin
-        //         for(int j = 31; j > -1; j = j-1) begin
-        //             //ELEMENT CREATION
-        //             valid_data_in = 1'b1;
-        //             row_addr = j;
-        //             col_addr = i;
-        //             matrix_element = ((i&j)==0)? 8'b1111_1111:{i,j};
-        //             #20;
-        //         end
-        //     end
-        // end
-
-        valid_data_in = 0;
-        #20;
-        #20;
-        #20;
-        #20;
-        #20;
-        #20;
-        #20;
-        data_request = 1'b1;
+        //MATRIX B
+        for(int i = 0; i<32; i=i+1) begin
+            //ROW
+            for(int j = 0; j <32; j = j+1) begin
+                //ELEMENT CREATION
+                for(int k = 0; k<4; k=k+1) begin
+                    if(i==j)begin
+                        axiiv = 1'b1;
+                        axiid = 2'b11;
+                    end else begin
+                        axiid = 0;
+                        axiiv = 1'b1;
+                    end
+                    #20;
+                end
+            end
+        end
+        axiid = 0;
+        axiiv = 0;
+        #20
         //REST
         for (int i = 0; i<34; i = i+1) begin
             requested_a_row = i;
