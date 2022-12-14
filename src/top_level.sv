@@ -53,7 +53,16 @@ module top_level(
     assign led[15] = kill_out;
     assign led[14] = done_out;
 
-
+    ila_0 your_instance_name (
+	.clk(eth_refclk), // input wire clk
+	.probe0(reordered_valid), // input wire [1:0]  probe0  
+	.probe1(reordered_dibit), // input wire [0:0]  probe1 
+	.probe2(compile_done), // input wire [0:0]  probe2 
+	.probe3(eth_txen), // input wire [0:0]  probe3 
+	.probe4(eth_txd), // input wire [1:0]  probe4 
+	.probe5(eth_out_request), // input wire [0:0]  probe5 
+	.probe6(led[8]) // input wire [0:0]  probe6
+);
 
     clk_wiz_0_clk_wiz my_divider (.clk_100mhz(clk_100mhz),.eth_refclk(eth_refclk),.inter_refclk(inter_refclk));
 
