@@ -168,6 +168,7 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           B_enb <= 0;
           B_regceb <= 0;
 
+          valid_out <= 0;
         end
 
         else if (transmitting) begin
@@ -200,6 +201,8 @@ module matrix_loader #( parameter MAX_ELEMENT_SIZE = 8, //ASsUME EVEN ONLY
           B_addrb <= 0;
           B_enb <= 0;
           B_regceb <= 0;
+          
+          valid_out <= 0;
         end
     end
 
