@@ -109,20 +109,20 @@ module top_level(
   	.done(done));
     
     logic compile_done;
-    logic [1:0] dibit;
+    logic [7:0] byte_out;
     logic valid_data_out;
 
     matrix_compiler #(.MAX_ELEMENT_SIZE(MAX_ELEMENT_SIZE), .MAX_SIZE_A(MAX_SIZE_A), .MAX_SIZE_B(MAX_SIZE_B)) 
                 my_compiler (.inter_refclk(inter_refclk), .eth_refclk(eth_refclk),.rst(btnc), 
-                            .valid_data_in(alg_val), .row_addr(alg_row), .col_addr(alg_col), .matrix_element(output_element), .data_request(eth_out_request), 
-                            .compile_done(compile_done), .dibit(dibit), .valid_data_out(valid_data_out));
+                            .valid_data_in(alg_val), .row_addr(alg_row), .col_addr(alg_col), .matrix_element(output_element), 
+                            .data_request(eth_out_request), .compile_done(compile_done), .byte_out(byte_out), .valid_data_out(valid_data_out));
+    
     logic [1:0] reordered_dibit;
     logic reordered_valid;
 
-    bitorder_out my_bitorder_out (.clk(eth_refclk), .rst(btnc), .axiiv(valid_data_out), .axiid(dibit),
+    bitorder_out my_bitorder_out (.clk(eth_refclk), .rst(btnc), .axiiv(valid_data_out), .axiid(byte_out),
                                     .axiov(reordered_valid), .axiod(reordered_dibit));
-    
-    logic ether_out_request;
+
 
     ether_out my_ether_out (.clk(eth_refclk), .(rst), .axiiv(reordered_valid), .axiid(reordered_dibit), .preamble_signal(compile_done),
                             .axiov(eth_txen), .axiod(eth_txd), .data_request(eth_out_request))

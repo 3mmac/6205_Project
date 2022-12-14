@@ -7,7 +7,6 @@ module ether_out (
                     input wire axiiv,
                     input wire [1:0] axiid,
                     input wire preamble_signal,
-                    //input wire compile_done, //is on for a single cycle the cycle after all values have been caluclated
 
                     output logic axiov,
                     output logic [1:0] axiod,
@@ -37,15 +36,14 @@ module ether_out (
     crc32 my_crc (.clk(clk), .rst(crc_rst), .axiiv(fcs_in_valid), .axiid(fcs_in), .axiov(fcs_out_valid), .axiod(fcs_out));
 
     always_comb begin
-        if (downtime | transmit_fcs | transmit_gap) begin
-            crc_rst = 1'b1;
-            fcs_in_valid = 0;
-            fcs_in = 0;
-        end
-        else if (transmit_header | transmit_data) begin
+        if (transmit_header | transmit_data) begin
             crc_rst = rst;
-            fcs_in_valid = axiov;
-            fcs_in = axiod;
+            //fcs_in_valid = axiov;
+            //fcs_in = axiod;
+        end else begin
+            crc_rst = 1'b1;
+            //fcs_in_valid = 0;
+            //fcs_in = 0;
         end
     end
    
@@ -61,6 +59,9 @@ module ether_out (
             transmit_fcs <= 0;
             transmit_gap <= 0;
             downtime <= 1'b1;
+
+            fcs_in_valid <= 0;
+            fcs_in <= 0;
         end
         else begin
             if (downtime) begin
@@ -68,27 +69,29 @@ module ether_out (
                     transmit_header <= 1'b1;
                     downtime <= 0;
                 end
-
+                fcs_in_valid <= 0;
+                fcs_in <= 0;
             end
 
             else if (transmit_header) begin
-                data_request <= (header_counter == 7'd28) 1'b1: 0;
+                data_request <= (header_counter == 7'd79)? 1'b1: 0;
 
-                if (header_counter == 7'd31) begin
+                if (header_counter == 7'd87) begin
                     transmit_header <= 0;
                     transmit_data <= 1'b1;
                     header_counter <= 0;
-                end
-                else begin
-                    header_counter <= header_counter + 1'b1;
-                    //transmit appropriate portion of header based on counter
-                    axiod <= HEADER[(175-2*header_counter)-:2]
-                    axiov <= 1'b1;
-                end
+                end else header_counter <= header_counter + 1'b1;
+                
+                //transmit appropriate portion of header based on counter
+                axiod <= HEADER[(175-2*header_counter)-:2];
+                axiov <= 1'b1;
+    
+                fcs_in_valid <= 1'b1;
+                fcs_in <= HEADER[(175-2*header_counter)-:2];
             end
 
             else if (transmit_data) begin
-                if (data_complete) begin
+                if (~axiiv) begin
                     //update state
                     transmit_data <= 0;
                     transmit_fcs <= 1'b1;
@@ -98,10 +101,14 @@ module ether_out (
                     //update fcs values
                     fcs_hold <= fcs_out;
                     fcs_counter <= 1'b1;
+                    fcs_in_valid <= 0;
+                    fcs_in <= 0;
                 end
                 else begin
                     axiod <= axiid;
                     axiov <= axiiv;
+                    fcs_in_valid <= axiiv;
+                    fcs_in <= axiid;
                 end
             end
 
@@ -110,8 +117,10 @@ module ether_out (
                     transmit_fcs <= 0;
                     transmit_gap <= 1'b1;
                 end
-                axiid <= fcs_hold[(31-fcs_counter*2)-: 2]
+                axiod <= fcs_hold[(31-fcs_counter*2)-: 2];
                 fcs_counter <= fcs_counter + 1'b1;
+                fcs_in_valid <= 0;
+                fcs_in <= 0;
             end
             else if (transmit_gap) begin
                 if (gap_counter == 5'd31) begin
@@ -119,6 +128,10 @@ module ether_out (
                     downtime <= 0;
                 end
                 gap_counter <= gap_counter + 1'b1;
+                fcs_in_valid <= 0;
+                fcs_in <= 0;
+                axiod <= 0;
+                axiov <= 0;
             end
         end
     end
